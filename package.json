@@ -1,0 +1,48 @@
+{
+  "name": "graphify-vr-explorer",
+  "displayName": "Holocron VR",
+  "version": "1.0.0",
+  "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "build:wasm": "emcc wasm-src/layout_engine.cpp -O3 -msimd128 -flto -s WASM=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='worker' -s INITIAL_MEMORY=33554432 -s MAXIMUM_MEMORY=52428800 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='[\"_init_graph\",\"_get_node_input_ptr\",\"_get_edge_input_ptr\",\"_compute_layout\",\"_get_positions_ptr\",\"_update_positions\",\"_get_node_count\",\"_free_memory\",\"_set_convergence_threshold\",\"_set_repulsion_k\",\"_set_attraction_k\",\"_set_damping\",\"_set_max_iterations\",\"_set_scene_radius\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -o frontend/layout_engine.mjs",
+    "build:wasm:debug": "emcc wasm-src/layout_engine.cpp -O0 -g -msimd128 -s WASM=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='worker' -s ASSERTIONS=2 -s INITIAL_MEMORY=33554432 -s MAXIMUM_MEMORY=52428800 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='[\"_init_graph\",\"_get_node_input_ptr\",\"_get_edge_input_ptr\",\"_compute_layout\",\"_get_positions_ptr\",\"_update_positions\",\"_get_node_count\",\"_free_memory\",\"_set_convergence_threshold\",\"_set_repulsion_k\",\"_set_attraction_k\",\"_set_damping\",\"_set_max_iterations\",\"_set_scene_radius\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -o frontend/layout_engine_debug.mjs",
+    "build:wasm:cmake": "emcmake cmake -B build/wasm -DCMAKE_BUILD_TYPE=Release && cmake --build build/wasm",
+    "build:wasm:cmake:debug": "emcmake cmake -B build/wasm-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/wasm-debug",
+    "test:wasm": "node scripts/test-wasm.mjs",
+    "test:unit": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.config.js",
+    "test:unit:coverage": "node --experimental-vm-modules node_modules/.bin/jest --config=jest.config.js --coverage",
+    "test:int": "playwright test --config=tests/integration/playwright.config.js",
+    "test:int:headed": "HEADFUL=1 playwright test --config=tests/integration/playwright.config.js",
+    "test:int:debug": "PWDEBUG=1 playwright test --config=tests/integration/playwright.config.js",
+    "clean": "rimraf dist",
+    "clean:wasm": "rimraf frontend/layout_engine.mjs frontend/layout_engine.wasm frontend/layout_engine_debug.mjs",
+    "bench:layout": "node scripts/bench-layout.js",
+    "bench:layout:json": "node scripts/bench-layout.js --json",
+    "bench:fps": "node scripts/bench-fps.js",
+    "bench:fps:json": "node scripts/bench-fps.js --json",
+    "bench:memory": "node scripts/bench-memory.js",
+    "bench:memory:json": "node scripts/bench-memory.js --json",
+    "bench:all": "npm run bench:layout && npm run bench:fps && npm run bench:memory",
+    "preview": "vite build && echo '--- dist/ contents ---' && find dist -type f"
+  },
+  "dependencies": {
+    "three": "^0.128.0",
+    "webxr-polyfill": "^2.0.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.4.1",
+    "@playwright/test": "^1.52.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "jest": "^30.4.2",
+    "playwright": "^1.52.0",
+    "rimraf": "^5.0.0",
+    "vite": "^5.4.0",
+    "vite-plugin-static-copy": "^1.0.0"
+  },
+  "author": "Yoda-Man",
+  "license": "MIT"
+}

@@ -1,0 +1,54 @@
+{
+  "name": "graphify-vr-explorer",
+  "displayName": "Holocron VR",
+  "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
+  "version": "1.0.0",
+  "author": "Yoda-Man",
+  "minYodaManVersion": "1.0.0",
+  "mandatory": false,
+  "entry": "main.js",
+  "permissions": [
+    "graphify:read",
+    "agent:invoke",
+    "audit:write",
+    "task:create",
+    "desktop:openFile",
+    "storage:indexeddb",
+    "webxr",
+    "speech"
+  ],
+  "uiExtensions": [
+    {
+      "target": "plugins-tab",
+      "label": "Holocron VR",
+      "icon": "assets/icon.svg",
+      "component": "frontend/UIPanel.jsx"
+    }
+  ],
+  "configSchema": {
+    "lodNear": {
+      "type": "number",
+      "default": 5,
+      "description": "Distance (units) for full-detail LOD tier"
+    },
+    "lodMid": {
+      "type": "number",
+      "default": 15,
+      "description": "Distance (units) for simplified LOD tier"
+    },
+    "lodFar": {
+      "type": "number",
+      "default": 30,
+      "description": "Distance (units) for dot-only LOD tier"
+    },
+    "maxNodes": {
+      "type": "number",
+      "default": 3000,
+      "description": "Maximum nodes to render; warns above this value"
+    },
+    "voiceEnabled": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

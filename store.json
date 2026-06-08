@@ -1,0 +1,95 @@
+{
+  "name": "Holocron VR",
+  "slug": "graphify-vr-explorer",
+  "version": "1.0.0",
+  "shortDescription": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
+  "longDescription": "Transform YodaMan's Graphify knowledge graphs into an explorable 3D constellation. Navigate 3,000+ nodes in VR at 72 FPS with SIMD-accelerated WASM layout, use natural-language voice commands, ask YodaMan's AI agent to explain any file's architecture role, and keep your code 100% local — zero data ever leaves your machine.\n\nDesktop 3D mode works with mouse and keyboard — no headset required.\n\nKey features:\n- Desktop 3D and VR modes (Meta Quest 2/3/Pro via WebXR)\n- Voice commands: \"Where is AuthService\", \"Show me payment\", \"Hide tests\"\n- AI agent integration: click \"Ask Agent\" for architectural explanations\n- Smart filtering: hide tests, third-party code, generated files, or show only recent changes\n- Save/restore views as YodaMan tasks\n- Open files in VS Code with one click\n- LOD system for smooth performance on 3,000+ node codebases",
+  "category": "visualisation",
+  "tags": [
+    "vr",
+    "3d",
+    "graphify",
+    "architecture",
+    "visualisation",
+    "webxr",
+    "constellation",
+    "dependencies",
+    "code-graph",
+    "navigation"
+  ],
+  "screenshots": [
+    {
+      "src": "assets/store/screenshot-desktop.png",
+      "alt": "Desktop 3D viewport showing a colourful code constellation with orbit controls",
+      "caption": "Desktop 3D mode — explore with mouse and keyboard"
+    },
+    {
+      "src": "assets/store/screenshot-vr.png",
+      "alt": "VR headset view inside the code constellation with controller rays visible",
+      "caption": "VR mode — fly through your codebase with hand-tracked controllers"
+    },
+    {
+      "src": "assets/store/screenshot-infopanel.png",
+      "alt": "Info panel showing file path, lines of code, dependency counts, and action buttons",
+      "caption": "Info Panel — detailed file metadata with one-click actions"
+    },
+    {
+      "src": "assets/store/screenshot-voice.png",
+      "alt": "Voice command toast feedback after saying 'Where is AuthService'",
+      "caption": "Voice commands — natural language navigation"
+    },
+    {
+      "src": "assets/store/screenshot-settings.png",
+      "alt": "Settings drawer with LOD thresholds, max nodes slider, voice toggle, and theme selector",
+      "caption": "Settings — configure LOD, filters, voice, and theme"
+    }
+  ],
+  "demoVideo": "assets/store/demo.mp4",
+  "icon": "assets/icon.svg",
+  "requirements": {
+    "minYodaManVersion": "1.0.0",
+    "graphifyRequired": true,
+    "optionalHardware": [
+      "Meta Quest 2",
+      "Meta Quest 3",
+      "Meta Quest Pro"
+    ],
+    "webxrRequired": false,
+    "speechRecognitionRequired": false
+  },
+  "permissions": [
+    "graphify:read",
+    "agent:invoke",
+    "audit:write",
+    "task:create",
+    "desktop:openFile",
+    "storage:indexeddb",
+    "webxr",
+    "speech"
+  ],
+  "links": {
+    "homepage": "https://github.com/Yoda-Man/Holocron",
+    "repository": "https://github.com/Yoda-Man/Holocron",
+    "documentation": "https://github.com/Yoda-Man/Holocron/blob/main/USER_MANUAL.md",
+    "support": "https://github.com/Yoda-Man/Holocron/issues",
+    "discussions": "https://github.com/Yoda-Man/Holocron/discussions",
+    "changelog": "https://github.com/Yoda-Man/Holocron/releases"
+  },
+  "author": {
+    "name": "Yoda-Man",
+    "url": "https://github.com/Yoda-Man"
+  },
+  "license": "MIT",
+  "releaseDate": "2026-06-08",
+  "languages": ["en"],
+  "platforms": ["macos", "windows", "linux"],
+  "keywords": [
+    "code-visualization",
+    "3d-graph",
+    "knowledge-graph",
+    "software-architecture",
+    "dependency-analysis",
+    "webxr-vr",
+    "developer-tools"
+  ]
+}

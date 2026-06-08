@@ -1,0 +1,2484 @@
+{
+  "config": {
+    "configFile": "/Users/marwamutemasango/Documents/Holocron VR/tests/integration/playwright.config.js",
+    "rootDir": "/Users/marwamutemasango/Documents/Holocron VR/tests/integration",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/marwamutemasango/Documents/Holocron VR/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "graphify-api",
+        "name": "graphify-api",
+        "testDir": "/Users/marwamutemasango/Documents/Holocron VR/tests/integration",
+        "testIgnore": [
+          "mock-data.js"
+        ],
+        "testMatch": [
+          "graphify.test.js"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/marwamutemasango/Documents/Holocron VR/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "lifecycle",
+        "name": "lifecycle",
+        "testDir": "/Users/marwamutemasango/Documents/Holocron VR/tests/integration",
+        "testIgnore": [
+          "mock-data.js"
+        ],
+        "testMatch": [
+          "lifecycle.test.js"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/marwamutemasango/Documents/Holocron VR/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "wasm",
+        "name": "wasm",
+        "testDir": "/Users/marwamutemasango/Documents/Holocron VR/tests/integration",
+        "testIgnore": [
+          "mock-data.js"
+        ],
+        "testMatch": [
+          "wasm.test.js"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/marwamutemasango/Documents/Holocron VR/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "privacy",
+        "name": "privacy",
+        "testDir": "/Users/marwamutemasango/Documents/Holocron VR/tests/privacy",
+        "testIgnore": [
+          "mock-data.js"
+        ],
+        "testMatch": [
+          "*.test.js"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/graphify-int-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.60.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "graphify.test.js",
+      "file": "graphify.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "/api/graphify/status",
+          "file": "graphify.test.js",
+          "line": 97,
+          "column": 6,
+          "specs": [
+            {
+              "title": "1a: Returns available=true for a workspace with a built graph",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 232,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:26.749Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-88267151c88684a9b149",
+              "file": "graphify.test.js",
+              "line": 98,
+              "column": 3
+            },
+            {
+              "title": "1b: Includes graphHash field in the response",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 53,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.153Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-f06090b4072e5837bd31",
+              "file": "graphify.test.js",
+              "line": 117,
+              "column": 3
+            },
+            {
+              "title": "1c: Returns available=false for an unindexed workspace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 53,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.211Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-6dbe9905fe64c100d5bb",
+              "file": "graphify.test.js",
+              "line": 130,
+              "column": 3
+            },
+            {
+              "title": "1d: Handles workspace paths with special characters (URL encoding)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.270Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-c151ac77912ac20907eb",
+              "file": "graphify.test.js",
+              "line": 143,
+              "column": 3
+            },
+            {
+              "title": "1e: Returns 404-like response for missing workspace (server error simulation)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.337Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-081c8dc9de5fd84667ef",
+              "file": "graphify.test.js",
+              "line": 155,
+              "column": 3
+            },
+            {
+              "title": "1f: Returns 500 for YodaMan backend outage",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.405Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-a5fa180e34e8e42a7650",
+              "file": "graphify.test.js",
+              "line": 170,
+              "column": 3
+            },
+            {
+              "title": "1g: stale field accurately reflects graph freshness",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.472Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-96cfe118bf2e29d61aa0",
+              "file": "graphify.test.js",
+              "line": 184,
+              "column": 3
+            },
+            {
+              "title": "1h: Missing path parameter returns 400 or defaults gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.539Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-470e2b8f14d53c68937b",
+              "file": "graphify.test.js",
+              "line": 197,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "/api/graphify/map",
+          "file": "graphify.test.js",
+          "line": 214,
+          "column": 6,
+          "specs": [
+            {
+              "title": "2a: Returns nodes and edges for a valid workspace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.607Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-ae29252d27d522f9f8ae",
+              "file": "graphify.test.js",
+              "line": 215,
+              "column": 3
+            },
+            {
+              "title": "2b: Nodes conform to GraphNode schema (02-TSD.md §5.1)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.675Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-a27e5444d5ecfe853211",
+              "file": "graphify.test.js",
+              "line": 231,
+              "column": 3
+            },
+            {
+              "title": "2c: Edges conform to GraphEdge schema (02-TSD.md §5.2)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.742Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-e88adbd027ced717a34e",
+              "file": "graphify.test.js",
+              "line": 267,
+              "column": 3
+            },
+            {
+              "title": "2d: limit parameter caps the returned node count",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.808Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-c9ca45958eb5d654b5ca",
+              "file": "graphify.test.js",
+              "line": 298,
+              "column": 3
+            },
+            {
+              "title": "2e: Nodes are sorted by importance descending when limit is applied",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.876Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-4015bf4bb1670ade7449",
+              "file": "graphify.test.js",
+              "line": 310,
+              "column": 3
+            },
+            {
+              "title": "2f: Edge source and target node IDs exist in the node list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:27.943Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-e742200eea09f5f09dc1",
+              "file": "graphify.test.js",
+              "line": 328,
+              "column": 3
+            },
+            {
+              "title": "2g: Response Content-Type is application/json",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.010Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-141016fbe4960204cdae",
+              "file": "graphify.test.js",
+              "line": 343,
+              "column": 3
+            },
+            {
+              "title": "2h: Handles edge with weight 0 or missing (default weight)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.076Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-369b3a1b3b740aede4c0",
+              "file": "graphify.test.js",
+              "line": 354,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "/api/graphify/query (POST)",
+          "file": "graphify.test.js",
+          "line": 378,
+          "column": 6,
+          "specs": [
+            {
+              "title": "3a: Accepts POST with a natural-language query and returns results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.143Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-db20e4798865cb99accb",
+              "file": "graphify.test.js",
+              "line": 379,
+              "column": 3
+            },
+            {
+              "title": "3b: Returns related nodes with similarity scores",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 67,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.211Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-64d2649d5fbaeece45a2",
+              "file": "graphify.test.js",
+              "line": 401,
+              "column": 3
+            },
+            {
+              "title": "3c: Top result is the query target itself (score = 1.0)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.282Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-340b75e609b98b67f43c",
+              "file": "graphify.test.js",
+              "line": 427,
+              "column": 3
+            },
+            {
+              "title": "3d: Returns empty matches array for unrelated queries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.349Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-41f9affe75d122a42328",
+              "file": "graphify.test.js",
+              "line": 447,
+              "column": 3
+            },
+            {
+              "title": "3e: Returns 400 for missing query field",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.416Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-ad756593e2ff8445ad99",
+              "file": "graphify.test.js",
+              "line": 466,
+              "column": 3
+            },
+            {
+              "title": "3f: Rejects GET requests to query endpoint",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.483Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-5d393360038aa74922c3",
+              "file": "graphify.test.js",
+              "line": 486,
+              "column": 3
+            },
+            {
+              "title": "3g: Returns results with optional reason field explaining match",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.549Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-67c49fab89f56958b97f",
+              "file": "graphify.test.js",
+              "line": 498,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "/api/graphify/affected",
+          "file": "graphify.test.js",
+          "line": 527,
+          "column": 6,
+          "specs": [
+            {
+              "title": "4a: Returns dependency chain for a node",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 62,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.616Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-614f0a5e68c523b9cf10",
+              "file": "graphify.test.js",
+              "line": 528,
+              "column": 3
+            },
+            {
+              "title": "4b: Returns edges with correct schema",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.682Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-919fffc4b9efea0bb3e3",
+              "file": "graphify.test.js",
+              "line": 556,
+              "column": 3
+            },
+            {
+              "title": "4c: depth parameter controls how far the traversal goes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.749Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-7af34a94724f9136940e",
+              "file": "graphify.test.js",
+              "line": 584,
+              "column": 3
+            },
+            {
+              "title": "4d: Returns empty arrays for an unknown (unconnected) node",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.816Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-df44fedd57bc204c63c3",
+              "file": "graphify.test.js",
+              "line": 623,
+              "column": 3
+            },
+            {
+              "title": "4e: Returns 400 for missing node parameter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.883Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-32f00e0d84578e5d8b11",
+              "file": "graphify.test.js",
+              "line": 644,
+              "column": 3
+            },
+            {
+              "title": "4f: Each affectedNode ID exists in the returned edges",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:28.949Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-441ad10198ca28fce4de",
+              "file": "graphify.test.js",
+              "line": 664,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "/api/graphify/explain",
+          "file": "graphify.test.js",
+          "line": 697,
+          "column": 6,
+          "specs": [
+            {
+              "title": "5a: Returns node context summary for agent prompts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.016Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-a2ec80bd32de1706478e",
+              "file": "graphify.test.js",
+              "line": 698,
+              "column": 3
+            },
+            {
+              "title": "5b: Summary contains the fields needed for agent prompt construction",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.084Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-487c0dece76a4ea97117",
+              "file": "graphify.test.js",
+              "line": 722,
+              "column": 3
+            },
+            {
+              "title": "5c: Dependencies object contains incoming and outgoing arrays",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.150Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-675f5b637a5e0a6bd94a",
+              "file": "graphify.test.js",
+              "line": 755,
+              "column": 3
+            },
+            {
+              "title": "5d: Each dependency entry includes source/target, type, and weight",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.217Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-8adf62d15b649aca0780",
+              "file": "graphify.test.js",
+              "line": 778,
+              "column": 3
+            },
+            {
+              "title": "5e: AuthService has 2 incoming and 3 outgoing dependencies (matches mock)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.285Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-93317d1163ca598f9f1f",
+              "file": "graphify.test.js",
+              "line": 804,
+              "column": 3
+            },
+            {
+              "title": "5f: Returns recentActivity field for files changed in last 7 days",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.351Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-6e472a870c7a231c5542",
+              "file": "graphify.test.js",
+              "line": 827,
+              "column": 3
+            },
+            {
+              "title": "5g: Returns error for unknown node",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.419Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-637d5c43615bb5abfef6",
+              "file": "graphify.test.js",
+              "line": 847,
+              "column": 3
+            },
+            {
+              "title": "5h: Returns 400 for missing node parameter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.487Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-b709c2242f7d45fd7d72",
+              "file": "graphify.test.js",
+              "line": 867,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "Empty graph & error handling",
+          "file": "graphify.test.js",
+          "line": 891,
+          "column": 6,
+          "specs": [
+            {
+              "title": "6a: Empty workspace returns nodes: [] and edges: [] from /map",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.554Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-1a968d464e3e6598a193",
+              "file": "graphify.test.js",
+              "line": 892,
+              "column": 3
+            },
+            {
+              "title": "6b: Empty workspace status shows available=true with no graphHash",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.621Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-4fc118671bc5d4ee16e7",
+              "file": "graphify.test.js",
+              "line": 905,
+              "column": 3
+            },
+            {
+              "title": "6c: Unindexed workspace shows available=false",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.688Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-66c3b92c0c4a2cba6069",
+              "file": "graphify.test.js",
+              "line": 918,
+              "column": 3
+            },
+            {
+              "title": "6d: Plugin transitions to empty-state UI when map returns no nodes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.755Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-b8822a444224ac0b9df0",
+              "file": "graphify.test.js",
+              "line": 930,
+              "column": 3
+            },
+            {
+              "title": "6e: Plugin shows error state when status.available is false",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.822Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-86e80d8c4160cdf49b3d",
+              "file": "graphify.test.js",
+              "line": 955,
+              "column": 3
+            },
+            {
+              "title": "6f: Server 500 error is propagated with error message",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.888Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-cc61c7025a893e5b483b",
+              "file": "graphify.test.js",
+              "line": 973,
+              "column": 3
+            },
+            {
+              "title": "6g: Network timeout is handled gracefully (simulated via abort)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 102,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:29.955Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-0410b376197afe47b213",
+              "file": "graphify.test.js",
+              "line": 988,
+              "column": 3
+            },
+            {
+              "title": "6h: Large codebase warning threshold (limit=5000, nodes capped)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.061Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-0126428543c2187b8be3",
+              "file": "graphify.test.js",
+              "line": 1014,
+              "column": 3
+            },
+            {
+              "title": "6i: Content-Type is always application/json for all endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "graphify-api",
+                  "projectName": "graphify-api",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.129Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "285b90c28b0fbf22aac8-593b01be8fd46734270c",
+              "file": "graphify.test.js",
+              "line": 1038,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "lifecycle.test.js",
+      "file": "lifecycle.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Plugin Lifecycle (§2.2)",
+          "file": "lifecycle.test.js",
+          "line": 112,
+          "column": 6,
+          "specs": [
+            {
+              "title": "plugin_appears_in_plugins_tab — card renders in YodaMan plugins tab",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "lifecycle",
+                  "projectName": "lifecycle",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 108,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.415Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "99259b769e10f0b2b244-fe608c571c55d2982a98",
+              "file": "lifecycle.test.js",
+              "line": 121,
+              "column": 3
+            },
+            {
+              "title": "plugin_card_shows_graph_status — card shows ready and node count",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "lifecycle",
+                  "projectName": "lifecycle",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 64,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.595Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "99259b769e10f0b2b244-7a1cf8d8a9d4b1b1dfdc",
+              "file": "lifecycle.test.js",
+              "line": 153,
+              "column": 3
+            },
+            {
+              "title": "modal_opens_on_click — clicking launch opens the VR modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "lifecycle",
+                  "projectName": "lifecycle",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 102,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.664Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "99259b769e10f0b2b244-a4edfeb15da740785405",
+              "file": "lifecycle.test.js",
+              "line": 174,
+              "column": 3
+            },
+            {
+              "title": "modal_closes_cleanly — clicking close hides modal and cleans up",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "lifecycle",
+                  "projectName": "lifecycle",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 115,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.771Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "99259b769e10f0b2b244-ea9586ed60a6b1975e3b",
+              "file": "lifecycle.test.js",
+              "line": 206,
+              "column": 3
+            },
+            {
+              "title": "plugin_survives_reload — reloading plugins reappears without restart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "lifecycle",
+                  "projectName": "lifecycle",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 53,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.890Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "99259b769e10f0b2b244-fb2f74c95dfad53ae13d",
+              "file": "lifecycle.test.js",
+              "line": 249,
+              "column": 3
+            },
+            {
+              "title": "settings_persist_across_sessions — LOD threshold saved and restored",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "lifecycle",
+                  "projectName": "lifecycle",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 63,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:30.946Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "99259b769e10f0b2b244-4fdb6694627665a4d01e",
+              "file": "lifecycle.test.js",
+              "line": 265,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "wasm.test.js",
+      "file": "wasm.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "WASM Loading & Fallback (§2.3)",
+          "file": "wasm.test.js",
+          "line": 132,
+          "column": 6,
+          "specs": [
+            {
+              "title": "wasm_loads_in_worker — module loads and worker logs ready",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "wasm",
+                  "projectName": "wasm",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 93,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:31.223Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b4ff4a6fd63ceb36b990-7908f01c47a5a273d667",
+              "file": "wasm.test.js",
+              "line": 175,
+              "column": 3
+            },
+            {
+              "title": "wasm_fallback_on_load_failure — broken import triggers JS fallback",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "wasm",
+                  "projectName": "wasm",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 55,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:31.379Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b4ff4a6fd63ceb36b990-34aba0e434900439450e",
+              "file": "wasm.test.js",
+              "line": 218,
+              "column": 3
+            },
+            {
+              "title": "wasm_layout_produces_valid_positions — 100 node graph yields valid coords",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "wasm",
+                  "projectName": "wasm",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 77,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:31.439Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b4ff4a6fd63ceb36b990-0ad160feb13225ce702d",
+              "file": "wasm.test.js",
+              "line": 251,
+              "column": 3
+            },
+            {
+              "title": "wasm_free_memory_prevents_leak — 10 successive runs with stable heap",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "wasm",
+                  "projectName": "wasm",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 52,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:31.524Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b4ff4a6fd63ceb36b990-c5900b1fdcece45474f2",
+              "file": "wasm.test.js",
+              "line": 348,
+              "column": 3
+            },
+            {
+              "title": "js_fallback_js_layout_produces_valid_results",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "wasm",
+                  "projectName": "wasm",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 52,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:31.580Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b4ff4a6fd63ceb36b990-08afff5235a689db292c",
+              "file": "wasm.test.js",
+              "line": 411,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../privacy/audit-log.test.js",
+      "file": "../privacy/audit-log.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Audit Log Privacy (§7)",
+          "file": "../privacy/audit-log.test.js",
+          "line": 92,
+          "column": 6,
+          "specs": [
+            {
+              "title": "audit_log_contains_no_code — no file contents in log entries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 591,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:31.840Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "610fd72f4b36980f1019-daf2a10ca1bafb291e8d",
+              "file": "../privacy/audit-log.test.js",
+              "line": 93,
+              "column": 3
+            },
+            {
+              "title": "audit_log_schema_valid — all entries match expected schema",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 56,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:32.498Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "610fd72f4b36980f1019-8b50dc5af0be035ecf9e",
+              "file": "../privacy/audit-log.test.js",
+              "line": 194,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../privacy/network-isolation.test.js",
+      "file": "../privacy/network-isolation.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Network Isolation (§7)",
+          "file": "../privacy/network-isolation.test.js",
+          "line": 85,
+          "column": 6,
+          "specs": [
+            {
+              "title": "no_external_fetch — zero non-localhost requests during session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 585,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[privacy] Captured 0 total requests, 0 external\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:32.567Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "61effa04a60aa16c843c-5318b7993f4d74816978",
+              "file": "../privacy/network-isolation.test.js",
+              "line": 86,
+              "column": 3
+            },
+            {
+              "title": "no_websocket_to_external — WebSocket connections are localhost only",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 574,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:33.157Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "61effa04a60aa16c843c-fbea3fe7a2ca0458d916",
+              "file": "../privacy/network-isolation.test.js",
+              "line": 161,
+              "column": 3
+            },
+            {
+              "title": "static_network_scan — source files only reference /api/ endpoints",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 55,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:33.737Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "61effa04a60aa16c843c-34d66a16f8eb5ff369fd",
+              "file": "../privacy/network-isolation.test.js",
+              "line": 190,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../privacy/voice-transcript-not-logged.test.js",
+      "file": "../privacy/voice-transcript-not-logged.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Voice Transcript Privacy (§7)",
+          "file": "../privacy/voice-transcript-not-logged.test.js",
+          "line": 145,
+          "column": 6,
+          "specs": [
+            {
+              "title": "voice_transcript_not_logged — raw text never appears in audit entry",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 618,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[privacy] Verified 10 voice command audit entries contain no raw transcripts\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:33.804Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8c9ea93374a3dda5044e-db751d791ddad84a8cae",
+              "file": "../privacy/voice-transcript-not-logged.test.js",
+              "line": 146,
+              "column": 3
+            },
+            {
+              "title": "voice_command_logs_action_not_utterance — per-utterance verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "privacy",
+                  "projectName": "privacy",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 54,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  ✓ \"where is AuthService\" → flyToNode (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"show me authentication\" → showCluster (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"find LoginForm\" → flyToNode (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"dependencies of UserModel\" → showDeps (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"hide tests\" → hideTests (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"show all\" → showAll (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"go home\" → flyToOrigin (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"ask agent about this\" → askAgent (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"um show me auth please\" → showCluster (transcript NOT logged)\n"
+                        },
+                        {
+                          "text": "  ✓ \"open in vs code\" → openInEditor (transcript NOT logged)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-06-08T21:07:34.426Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8c9ea93374a3dda5044e-3ea025417eadf34228c3",
+              "file": "../privacy/voice-transcript-not-logged.test.js",
+              "line": 269,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-06-08T21:07:26.426Z",
+    "duration": 8079.26,
+    "expected": 64,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

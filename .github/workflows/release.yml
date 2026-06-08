@@ -1,0 +1,141 @@
+# Release — Create GitHub Release with packaged plugin
+
+# Runs when a tag matching v*.*.* is pushed. Builds, tests, packages,
+# and publishes a GitHub Release with the plugin zip attached.
+#
+# @see 09-Deployment-Spec.md §8.1 — CI/CD pipeline
+# @see 09-Deployment-Spec.md §5.1 — Changelog generation
+# @see 09-Deployment-Spec.md §8.2 — Release checklist
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Full history for changelog
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Install Emscripten ──────────────────────────────────────────
+      - name: Cache Emscripten SDK
+        uses: actions/cache@v4
+        id: emscripten-cache
+        with:
+          path: ~/.emsdk
+          key: emsdk-${{ runner.os }}-latest
+
+      - name: Install Emscripten
+        if: steps.emscripten-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git ~/.emsdk
+          cd ~/.emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+
+      - name: Activate Emscripten
+        run: |
+          cd ~/.emsdk
+          source ./emsdk_env.sh
+          echo "PATH=$PATH" >> $GITHUB_ENV
+
+      # ── Build ───────────────────────────────────────────────────────
+      - name: Build WASM module
+        run: |
+          source ~/.emsdk/emsdk_env.sh
+          npm run build:wasm
+
+      - name: Build plugin bundle
+        run: npm run build
+
+      # ── Verify ──────────────────────────────────────────────────────
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run unit tests with coverage
+        run: npm run test:unit:coverage
+
+      - name: Run privacy network scan
+        run: |
+          echo "Checking for external URLs in source..."
+          EXTERNAL=$(grep -rnoP "fetch\(['\"](?!\/api\/)(?!http://localhost)(?!file://)([^'\"]+)" frontend/ backend/ main.js 2>/dev/null || true)
+          if [ -n "$EXTERNAL" ]; then echo "FAIL: External URL detected"; echo "$EXTERNAL"; exit 1; fi
+          echo "PASS: All fetch URLs are localhost or /api/"
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Run layout benchmarks
+        run: npm run bench:layout:json
+
+      # ── Package ─────────────────────────────────────────────────────
+      - name: Create dist directory (clean)
+        run: |
+          # Copy WASM outputs into dist
+          cp frontend/layout_engine.mjs dist/frontend/ 2>/dev/null || true
+          cp frontend/layout_engine.wasm dist/frontend/ 2>/dev/null || true
+          # Copy README
+          cp README.md dist/ 2>/dev/null || true
+
+      - name: Package release zip
+        run: |
+          # The dist/ folder mirrors the plugin structure
+          cd dist
+          zip -r ../graphify-vr-explorer-${{ github.ref_name }}.zip \
+            . \
+            --exclude "wasm-src/*" "tests/*" "*.test.js" "*.md"
+          cd ..
+
+      # ── Changelog ───────────────────────────────────────────────────
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: |
+            {
+              "ignorePreReleases": false,
+              "categories": [
+                {"title": "🚀 Features", "labels": ["feat", "feature", "enhancement"]},
+                {"title": "🐛 Bug Fixes", "labels": ["fix", "bug"]},
+                {"title": "📖 Documentation", "labels": ["docs", "documentation"]},
+                {"title": "🧹 Maintenance", "labels": ["chore", "refactor", "style"]},
+                {"title": "⚡ Performance", "labels": ["perf", "performance"]},
+                {"title": "🧪 Tests", "labels": ["test"]}
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Release ─────────────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Holocron VR ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: graphify-vr-explorer-${{ github.ref_name }}.zip
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
+          fail_on_unmatched_files: false
