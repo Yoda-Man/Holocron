@@ -97,6 +97,9 @@ export default defineConfig({
 
     // ─── Rollup Configuration ──────────────────────────────────────────
     rollupOptions: {
+      preserveEntrySignatures: 'strict',
+      treeshake: false,
+
       // Three entry points matching the YodaMan plugin contract:
       //   main.js          — lifecycle hooks (module.exports)
       //   frontend/UIPanel  — React card component (JSX)

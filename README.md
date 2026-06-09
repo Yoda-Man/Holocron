@@ -19,7 +19,7 @@
 
 **Turn your codebase into an explorable 3D VR constellation.** Holocron VR transforms YodaMan's Graphify knowledge graphs into a navigable 3D universe where every file is a glowing sphere, every dependency is a connecting line, and you can fly through it all with mouse, keyboard, or a Meta Quest headset.
 
-[screenshot: hero image showing a colourful 3D constellation with glowing nodes connected by lines against a dark space background]
+![Holocron VR code constellation hero](assets/screenshots/hero-constellation.png)
 
 ---
 
@@ -27,12 +27,12 @@
 
 | Desktop 3D | VR Mode | Info Panel | Settings |
 |---|---|---|---|
-| [screenshot: browser-based 3D viewport with constellation and orbit controls] | [screenshot: Meta Quest headset view showing a user inside the VR constellation] | [screenshot: Info Panel showing file path, LOC, deps, agent button, and VS Code button] | [screenshot: Settings drawer with LOD sliders, voice toggle, and theme selector] |
+| ![Desktop 3D viewport](assets/screenshots/desktop-3d.png) | ![VR mode headset view](assets/screenshots/vr-mode.png) | ![Selected node info panel](assets/screenshots/info-panel.png) | ![Settings drawer](assets/screenshots/settings-drawer.png) |
 | Full 3D viewport with mouse/keyboard controls. | Immersive VR experience with hand-tracked controllers. | Detailed file info with interactive action buttons. | Configurable LOD, filters, voice, and theme. |
 
 | Node Detail | Voice Command | Filtering | Performance HUD |
 |---|---|---|---|
-| [screenshot: close-up of node spheres showing size and colour variation, glow effects, and edge lines] | [screenshot: voice command toast feedback showing recognised command] | [screenshot: filtered view with only certain file types visible] | [screenshot: debug overlay showing FPS, frame time, and heap usage] |
+| ![Node detail close-up](assets/screenshots/node-detail.png) | ![Voice command feedback](assets/screenshots/voice-command.png) | ![Filtered constellation view](assets/screenshots/filtering.png) | ![Performance HUD overlay](assets/screenshots/performance-hud.png) |
 | Spheres sized by LOC, coloured by language, glowing by importance. | "Where is AuthService" instantly flies to the target. | Hide tests, third-party code, or show only recent changes. | Press Ctrl+Shift+D to reveal live performance metrics. |
 
 ---
@@ -43,32 +43,57 @@
 - **Desktop mode** — Mouse/keyboard orbit, pan, zoom, and click interaction
 - **VR mode** — Meta Quest 2/3/Pro via WebXR with full 6-DoF controller tracking
 - **Single InstancedMesh** — All 3,000+ nodes rendered in a single draw call
-- **SIMD-accelerated WASM** — Layout computation 10× faster than pure JS
+- **SIMD-accelerated WASM** — Layout computation 10× faster than pure JS (52 `wasm_simd128.h` intrinsics)
+- **LOD system** — 4-tier Level of Detail (FULL→MID→DOT→CULLED) with hysteresis anti-flicker
+- **10-frame transition animation** — Smooth interpolated scale changes between LOD tiers
+- **Auto-performance mode** — Automatically reduces LOD thresholds when FPS < 45 for 3+ seconds
+- **Edge visual encoding** — 4 edge types with distinct colours (white=import, orange=call, purple=inheritance, teal=composition)
+- **Cluster aggregation** — Distant cluster pairs shown as single aggregated lines
+- **Per-segment edge culling** — Edges hidden when both endpoints > 15 units from camera
 
 ### 🗣 Voice Commands
 - Natural language: *"Where is AuthService"*, *"Show me payment"*, *"Hide tests"*
 - Strips filler words: *"um show me auth please"* → `showCluster(auth)`
-- Full grammar: navigation, dependencies, filters, agent, save/restore
+- 19-command grammar: navigation, dependencies, filters, agent, save/restore, help
+- Keyboard shortcuts as fallback: `Ctrl+Shift+H` (hide tests), `Ctrl+Shift+S` (show all), `Ctrl+Shift+R` (return)
 
 ### 🤖 AI Agent Integration
 - Click **Ask Agent** to get an architectural explanation of any file
+- **Context-aware agent** — sends VR camera state, Git branch, uncommitted files, and file attachments alongside your query
 - Agent sees the file's LOC, dependency count, and graph context
 - Response streams into YodaMan's chat panel
+- Audited: `vr_ask_agent` logged with nodeId and taskId
 
 ### 🔍 Smart Filtering
 - Hide test files, third-party code (`node_modules`), generated files
 - Show only files changed in the last 30 days
 - Filter by language (Dart, TypeScript, JavaScript, Python, JSON, YAML)
+- Efficient per-instance visibility via instance matrix (scale=0 for hidden, no mesh rebuild)
 
 ### 💾 Save / Restore Views
 - Bookmark your current camera position and selection as a YodaMan Task
 - Restore any saved view from the task list with one click
 - Works across sessions
+- Voice command: *"save view"*
 
 ### 🔗 VS Code Integration
 - Click **Open in VS Code** to jump directly to the selected file
-- Fallback diagnostics tell you if VS Code is not installed or not in PATH
+- Diagnostics check: GET `/api/desktop/diagnostics` verifies VS Code availability first
+- Cross-platform path handling: Windows backslashes normalized to forward slashes
 - Keyboard shortcut: `Ctrl+O` / `Cmd+O`
+
+### 📊 Performance & Memory
+- **Object pooling** — Reusable `_vec3`, `_quat`, `_mat4`, `_color`, `_pos`, `_raycaster` — zero allocations in hot paths
+- **WeakRef event handlers** — Info panel handlers GC'd when panel closes (prevents node data retention)
+- **Memory leak detection** — Logs JS heap before/after `dispose()`; warns on > 20 MB growth
+- **Dev-only profiler** — `[VR PERF]` checkpoint logs stripped in production by `__DEV__` flag
+- **Debug overlay** — `Ctrl+Shift+D` shows live FPS, frame time, and heap usage
+
+### 🛡️ Privacy & Audit
+- **8 audit actions** logged locally: open, close, VR enter, node select, voice command, ask agent, save view, open file
+- **Zero exfiltration** — audit log stays at `~/.yodaman/audit-log.jsonl`, never transmitted
+- **No raw transcripts** — voice commands logged as action names only (e.g., `flyToNode` not *"where is AuthService"*)
+- **No code content** — only file paths and metadata in logs
 
 ---
 
@@ -76,7 +101,7 @@
 
 ```bash
 # One-liner — clone into your YodaMan plugins directory
-git clone https://github.com/Yoda-Man/Holocron.git ~/.yodaman/plugins/graphify-vr-explorer
+git clone https://github.com/Yoda-Man/Holocron.git ~/.yodaman/plugins/holocron-vr
 
 # Then reload plugins in YodaMan:
 # → Plugins tab → "Reload Plugins" → "Open VR Explorer"
@@ -139,41 +164,44 @@ The [privacy verification suite](tests/privacy/) runs in CI and blocks the build
 ## Project Structure
 
 ```
-graphify-vr-explorer/
+holocron-vr/
 ├── plugin.json               ← Manifest (name, version, permissions)
 ├── main.js                   ← YodaMan lifecycle hooks
 ├── frontend/                 ← 3D scene, UI, Web Worker
-│   ├── VRViewer.js           ← Three.js scene manager (InstancedMesh, LOD, edges)
-│   ├── VRController.js       ← WebXR session + controller input
-│   ├── InfoPanel.jsx         ← Node info panel (React)
-│   ├── SettingsPanel.jsx     ← Settings drawer (React)
+│   ├── VRViewer.js           ← Three.js scene manager (InstancedMesh, LOD, edges, filters)
+│   ├── VRController.js       ← WebXR session + 6-DoF controller input
+│   ├── InfoPanel.jsx         ← Node info panel (React) — deps, agent, VS Code
+│   ├── SettingsPanel.jsx     ← Settings drawer (React) — LOD, filters, voice, theme
 │   ├── UIPanel.jsx           ← Plugin card component
-│   ├── voiceCommands.js      ← Speech recognition + 12-command grammar
-│   └── layoutWorker.js       ← Web Worker (WASM layout engine bridge)
-├── backend/                  ← Data pipeline, cache, integrations
-│   ├── graphProcessor.js     ← Graphify API → internal format
-│   ├── layoutStore.js        ← IndexedDB 3D position cache
+│   ├── voiceCommands.js      ← Speech recognition + 19-command grammar
+│   ├── layoutWorker.js       ← Web Worker (WASM layout engine bridge + JS fallback)
+│   └── layout_engine.mjs     ← Compiled WASM module (Emscripten)
+├── backend/                  ← Data pipeline, cache, integrations, context
+│   ├── graphProcessor.js     ← Graphify API → internal format (normalize, cluster, hash)
+│   ├── layoutStore.js        ← IndexedDB 3D position cache (LRU eviction)
 │   ├── agentClient.js        ← "Ask Agent" API orchestration
+│   ├── agentContextProvider.js← Multi-source context aggregator (VR, Git, files, Graphify)
 │   ├── viewStore.js          ← Save/restore VR views as YodaMan tasks
-│   ├── auditLogger.js        ← Privacy-safe audit log (8 action types)
-│   ├── vscodeClient.js       ← "Open in VS Code" API
-│   └── perfLogger.js         ← Dev-only performance profiling
-├── wasm-src/                 ← C++ WASM layout engine
-│   ├── layout_engine.cpp     ← SIMD-accelerated force-directed layout
+│   ├── auditLogger.js        ← Privacy-safe audit log (8 action types, zero-exfil)
+│   ├── vscodeClient.js       ← "Open in VS Code" API + keyboard shortcut
+│   └── perfLogger.js         ← Dev-only performance profiling (__DEV__ stripped in prod)
+├── wasm-src/                 ← C++ WASM layout engine (SIMD via wasm_simd128.h)
+│   ├── layout_engine.cpp     ← SIMD-accelerated force-directed layout (52 intrinsic calls)
 │   ├── force_directed.h      ← Micro-layout (O(n²) repulsion + attraction)
 │   ├── macro_layout.h        ← Macro-layout (golden-angle sphere placement)
-│   └── CMakeLists.txt        ← Emscripten build
+│   └── CMakeLists.txt        ← Emscripten build (Release/Debug)
 ├── assets/                   ← Icons, GLSL shaders
-│   ├── icon.svg
-│   └── shaders/
-├── scripts/                  ← Benchmarks & tests
-│   ├── bench-layout.js       ← Layout speed (5 graph sizes)
-│   ├── bench-fps.js          ← FPS stability (60s Playwright session)
-│   └── bench-memory.js       ← Memory leak detection (10-cycle open/close)
-├── tests/                    ← 237 automated tests
-│   ├── unit/                 ← 173 Jest tests (layout, voice, LOD, graph)
+│   ├── icon.svg              ← Constellation globe icon
+│   └── shaders/              ← node.vert + node.frag (glow + Fresnel)
+├── scripts/                  ← Benchmarks & utilities
+│   ├── bench-layout.js       ← Layout speed (100/500/1000/3000/5000 nodes)
+│   ├── bench-fps.js          ← FPS stability (60s Playwright session, P10 metric)
+│   ├── bench-memory.js       ← Memory leak detection (10-cycle open/close, <20 MB)
+│   └── test-wasm.mjs         ← WASM export verification (28-test suite)
+├── tests/                    ← 237 automated tests (CI-gated)
+│   ├── unit/                 ← 173 Jest tests (layout, voice, LOD, graph processor)
 │   ├── integration/          ← 57 Playwright tests (API, lifecycle, WASM)
-│   └── privacy/              ← 7 Playwright tests (network, audit, voice)
+│   └── privacy/              ← 7 Playwright tests (network isolation, audit, transcripts)
 ├── .github/workflows/        ← CI/CD (push + tag)
 │   ├── ci.yml                ← Validate on every push
 │   └── release.yml           ← Package + release on tag
@@ -189,7 +217,7 @@ graphify-vr-explorer/
 ```bash
 # Clone and install
 git clone https://github.com/Yoda-Man/Holocron.git
-cd graphify-vr-explorer
+cd holocron-vr
 npm install
 
 # Build WASM (requires Emscripten)

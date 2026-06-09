@@ -30,6 +30,11 @@ const FILLER_WORDS = new Set([
 // paramGroup (1 or 2) indicates which capture group holds the parameter.
 
 const COMMANDS = [
+  // ── Git Time Travel ────────────────────────────────────────────────
+  { pattern: /show me last week'?s changes/i, action: 'timeTravelLastWeek', paramIdx: null },
+  { pattern: /what changed on ([a-z0-9 -]+)\??/i, action: 'timeTravelDate', paramIdx: 1 },
+  { pattern: /show evolution of (.+)/i, action: 'timeTravelEvolution', paramIdx: 1 },
+
   // ── Navigation ─────────────────────────────────────────────────────
   { pattern: /show me (.+)/i,            action: 'showCluster',    paramIdx: 1 },
   { pattern: /where(?: is|'s| are|'re)? (.+)/i, action: 'flyToNode', paramIdx: 1 },
@@ -341,6 +346,9 @@ class VoiceCommands {
       showAll:        'Showing all nodes',
       askAgent:       'Asking agent',
       findSimilar:    'Finding similar files',
+      timeTravelLastWeek: 'Showing last week changes',
+      timeTravelDate: 'Showing changes on',
+      timeTravelEvolution: 'Showing evolution of',
       openInEditor:   'Opening in VS Code',
       saveView:       'Saving view',
       help:           'Opening voice help',

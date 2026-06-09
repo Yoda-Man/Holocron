@@ -98,6 +98,10 @@ const EDGE_COLOR_DEFAULT = 0x6b7280;
 /** Edge linewidth (WebGL ignores > 1 on most platforms; see fallback below). */
 const EDGE_LINEWIDTH = 1;
 
+const TIME_TRAVEL_HIGHLIGHT_COLOR = 0xffffff;
+const TIME_TRAVEL_HIGHLIGHT_MS = 2000;
+const TIME_TRAVEL_PLAY_MS = 1000;
+
 // ─── LOD tier enum ─────────────────────────────────────────────────────
 const LOD = Object.freeze({ FULL: 0, MID: 1, DOT: 2, CULLED: 3 });
 
@@ -166,6 +170,8 @@ class VRViewer {
       lodMid:   options.lodMid   ?? LOD_MID,
       lodFar:   options.lodFar   ?? LOD_FAR,
       maxNodes: options.maxNodes ?? 3000,
+      workspacePath: options.workspacePath || options.workspace || '',
+      apiBaseUrl: options.apiBaseUrl || '',
     };
 
     this.isVRActive  = false;
@@ -200,6 +206,31 @@ class VRViewer {
     this._sphereGeomFull = null;
     this._sphereGeomMid  = null;
     this._glowGeom       = null;
+
+    // Git time-travel state
+    this._timeTravel = {
+      enabled: false,
+      commits: [],
+      index: 0,
+      overlay: null,
+      slider: null,
+      label: null,
+      detail: null,
+      playButton: null,
+      timeButton: null,
+      heatmapButton: null,
+      controls: null,
+    };
+    this._timeTravelHighlightTimers = new Map();
+    this._timeTravelPlayTimer = null;
+    this._gitHeatmapActive = false;
+    this._gitHeatmapOriginalColors = new Map();
+  }
+
+  static _gitHistoryCache = new Map();
+
+  static clearGitHistoryCache() {
+    VRViewer._gitHistoryCache.clear();
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -245,6 +276,7 @@ class VRViewer {
 
     // Click handler (node selection)
     this._attachClickHandler();
+    this._ensureTimeTravelHeaderControls();
 
     // Resize
     this._onResize = this._onResize.bind(this);
@@ -1320,6 +1352,379 @@ class VRViewer {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
+  //  GIT HEATMAP & TIME TRAVEL
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /** Enable commit-index time travel mode and render the bottom overlay. */
+  async enableTimeTravelMode() {
+    this._ensureTimeTravelOverlay();
+    this._timeTravel.enabled = true;
+
+    const commits = await this._loadCommitHistory();
+    this._timeTravel.commits = commits;
+    this._updateTimeTravelSliderBounds();
+
+    if (commits.length > 0) {
+      await this.setTimeTravelIndex(Math.max(0, commits.length - 1), commits[commits.length - 1], { highlight: false });
+    } else {
+      this._updateTimeTravelContext(null, -1, []);
+    }
+
+    this._emit('time-travel-enabled', { commits });
+    return commits;
+  }
+
+  /** Toggle local Git heatmap coloring for nodes. */
+  async toggleGitHeatmap() {
+    if (this._gitHeatmapActive) {
+      this.clearGitHeatmap();
+      return false;
+    }
+    await this.applyGitHeatmap();
+    return true;
+  }
+
+  /** Apply heatmap colors based on /api/git/heatmap data. */
+  async applyGitHeatmap() {
+    if (!this.nodeIdMap || !this.nodeData) return false;
+    const res = await fetch(this._apiUrl('/api/git/heatmap', { path: this._workspacePath() }));
+    if (!res.ok) throw new Error('Failed to fetch Git heatmap: ' + res.status);
+    const heatmap = await res.json();
+
+    for (const entry of Array.isArray(heatmap) ? heatmap : []) {
+      const idx = this._findNodeIndexByPath(entry.filePath || entry.path);
+      if (idx === undefined) continue;
+      if (!this._gitHeatmapOriginalColors.has(idx)) {
+        this._gitHeatmapOriginalColors.set(idx, this.nodeData[idx]?.color?.clone?.() || this.nodeData[idx]?.color);
+      }
+      const count = Number(entry.changeCount ?? entry.commits ?? 0);
+      const colour = count >= 10 ? 0xff3b30 : count >= 3 ? 0xff9500 : this.nodeData[idx]?.color || COLOR_DEFAULT;
+      this.updateNodeColor(idx, colour);
+    }
+
+    this._gitHeatmapActive = true;
+    this._emit('git-heatmap-change', { enabled: true, heatmap });
+    return true;
+  }
+
+  /** Restore colors changed by the Git heatmap. */
+  clearGitHeatmap() {
+    for (const [idx, colour] of this._gitHeatmapOriginalColors.entries()) {
+      this.updateNodeColor(idx, colour || this.nodeData?.[idx]?.color || COLOR_DEFAULT);
+    }
+    this._gitHeatmapOriginalColors.clear();
+    this._gitHeatmapActive = false;
+    this._emit('git-heatmap-change', { enabled: false });
+  }
+
+  /** Move to a specific commit index and pulse files changed in that commit. */
+  async setTimeTravelIndex(commitIndex, commitData, options = {}) {
+    const commits = this._timeTravel.commits || [];
+    const bounded = Math.max(0, Math.min(commitIndex ?? 0, Math.max(commits.length - 1, 0)));
+    let commit = commitData || commits[bounded] || null;
+
+    if (commit && !this._commitHasFiles(commit)) {
+      commit = await this._loadCommitDiff(commit);
+      if (commits[bounded]) commits[bounded] = { ...commits[bounded], ...commit };
+    }
+
+    this.clearTimeTravelHighlights();
+    this._timeTravel.index = bounded;
+    if (this._timeTravel.slider) this._timeTravel.slider.value = String(bounded);
+
+    const files = this._normaliseChangedFiles(commit);
+    this._updateTimeTravelContext(commit, bounded, files);
+
+    if (options.highlight !== false) {
+      for (const file of files) {
+        const idx = this._findNodeIndexByPath(file);
+        if (idx !== undefined) this._pulseTimeTravelNode(idx, options.durationMs || TIME_TRAVEL_HIGHLIGHT_MS);
+      }
+    }
+
+    this._emit('time-travel-change', { commitIndex: bounded, commit, files });
+    return commit;
+  }
+
+  /** Animate from the current commit through the end of the filtered history. */
+  animateTimeTravel(commits = this._timeTravel.commits) {
+    if (!commits || commits.length === 0) return false;
+    this.stopTimeTravelAnimation();
+
+    let index = Math.max(0, this._timeTravel.index || 0);
+    const step = async () => {
+      if (index >= commits.length) {
+        this.stopTimeTravelAnimation();
+        return;
+      }
+      await this.setTimeTravelIndex(index, commits[index], { durationMs: TIME_TRAVEL_PLAY_MS });
+      index += 1;
+      this._timeTravelPlayTimer = setTimeout(step, TIME_TRAVEL_PLAY_MS);
+    };
+
+    if (this._timeTravel.playButton) this._timeTravel.playButton.textContent = 'Pause';
+    step();
+    return true;
+  }
+
+  stopTimeTravelAnimation() {
+    if (this._timeTravelPlayTimer) clearTimeout(this._timeTravelPlayTimer);
+    this._timeTravelPlayTimer = null;
+    if (this._timeTravel.playButton) this._timeTravel.playButton.textContent = 'Play';
+  }
+
+  clearTimeTravelHighlights() {
+    for (const [, restore] of this._timeTravelHighlightTimers.entries()) {
+      clearTimeout(restore.timer);
+      this.updateNodeColor(restore.index, restore.color || this.nodeData?.[restore.index]?.color || COLOR_DEFAULT);
+      this.updateNodeScale(restore.index, restore.scale || this.nodeData?.[restore.index]?.scale || SCALE_MIN);
+    }
+    this._timeTravelHighlightTimers.clear();
+  }
+
+  /** Route parsed voice command actions from voiceCommands.js. */
+  async handleVoiceCommand(action, param) {
+    if (['timeTravelLastWeek', 'timeTravelDate', 'timeTravelEvolution'].includes(action)) {
+      return this.handleTimeTravelVoiceCommand(action, param);
+    }
+    if (action === 'flyToNode' && param) return this.flyToNode(param);
+    if (action === 'showAll') return this.setFilter ? Object.keys(this.getFilters()).forEach((key) => this.setFilter(key, false)) : null;
+    if (action === 'hideTests') return this.setFilter('tests', true);
+    if (action === 'showTests') return this.setFilter('tests', false);
+    this._emit('voice-command', { action, param });
+    return null;
+  }
+
+  /** Handle voice shortcuts routed from voiceCommands.js. */
+  async handleTimeTravelVoiceCommand(action, param) {
+    await this.enableTimeTravelMode();
+    const commits = this._timeTravel.commits || [];
+
+    if (action === 'timeTravelLastWeek') {
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const filtered = commits.filter((commit) => new Date(commit.date).getTime() >= cutoff);
+      this._timeTravel.commits = filtered;
+      this._updateTimeTravelSliderBounds();
+      if (filtered.length > 0) await this.setTimeTravelIndex(0, filtered[0]);
+      return filtered;
+    }
+
+    if (action === 'timeTravelDate') {
+      const wanted = this._normaliseSpokenDate(param);
+      const index = commits.findIndex((commit) => this._commitMatchesSpokenDate(commit, wanted));
+      if (index >= 0) await this.setTimeTravelIndex(index, commits[index]);
+      return index;
+    }
+
+    if (action === 'timeTravelEvolution') {
+      const needle = (param || '').toLowerCase();
+      const matching = commits.filter((commit) => this._normaliseChangedFiles(commit).some((file) => file.toLowerCase().includes(needle)));
+      this._timeTravel.commits = matching;
+      this._updateTimeTravelSliderBounds();
+      if (matching.length > 0) this.animateTimeTravel(matching);
+      return matching;
+    }
+
+    return null;
+  }
+
+  _ensureTimeTravelHeaderControls() {
+    if (this._timeTravel.controls || typeof document === 'undefined') return;
+
+    const controls = document.createElement('div');
+    controls.className = 'holocron-vr-header-controls';
+    controls.style.cssText = 'position:absolute;top:14px;right:14px;z-index:20;display:flex;gap:8px;align-items:center;';
+
+    const timeButton = this._makeOverlayButton('Time Travel', 'Time');
+    timeButton.addEventListener('click', () => this.enableTimeTravelMode());
+    const heatmapButton = this._makeOverlayButton('Git Heatmap', 'Heatmap');
+    heatmapButton.addEventListener('click', () => this.toggleGitHeatmap());
+    controls.appendChild(timeButton);
+    controls.appendChild(heatmapButton);
+    this.container.appendChild(controls);
+
+    this._timeTravel.controls = controls;
+    this._timeTravel.timeButton = timeButton;
+    this._timeTravel.heatmapButton = heatmapButton;
+  }
+
+  _ensureTimeTravelOverlay() {
+    if (this._timeTravel.overlay || typeof document === 'undefined') return;
+    this._ensureTimeTravelHeaderControls();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'holocron-time-travel-overlay';
+    overlay.style.cssText = 'position:absolute;left:18px;right:18px;bottom:18px;z-index:20;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;background:rgba(8,10,24,0.78);color:#f8fafc;font:12px/1.4 Inter,system-ui,sans-serif;backdrop-filter:blur(14px);box-shadow:0 18px 42px rgba(0,0,0,0.28);';
+
+    const playButton = this._makeOverlayButton('Play time travel', 'Play');
+    playButton.addEventListener('click', () => {
+      if (this._timeTravelPlayTimer) this.stopTimeTravelAnimation();
+      else this.animateTimeTravel();
+    });
+
+    const sliderWrap = document.createElement('div');
+    sliderWrap.style.cssText = 'display:grid;gap:6px;min-width:0;';
+    const label = document.createElement('div');
+    label.className = 'holocron-time-travel-label';
+    label.textContent = 'Loading Git history...';
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '0';
+    slider.max = '0';
+    slider.step = '1';
+    slider.value = '0';
+    slider.style.cssText = 'width:100%;accent-color:#ffffff;';
+    slider.addEventListener('input', () => {
+      const index = Number(slider.value || 0);
+      this.setTimeTravelIndex(index, this._timeTravel.commits[index]);
+    });
+    sliderWrap.appendChild(label);
+    sliderWrap.appendChild(slider);
+
+    const detail = document.createElement('div');
+    detail.className = 'holocron-time-travel-detail';
+    detail.style.cssText = 'max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0.82;';
+    detail.textContent = 'No commit selected';
+
+    overlay.appendChild(playButton);
+    overlay.appendChild(sliderWrap);
+    overlay.appendChild(detail);
+    this.container.appendChild(overlay);
+
+    this._timeTravel.overlay = overlay;
+    this._timeTravel.slider = slider;
+    this._timeTravel.label = label;
+    this._timeTravel.detail = detail;
+    this._timeTravel.playButton = playButton;
+  }
+
+  _makeOverlayButton(label, text) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = text;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.style.cssText = 'border:1px solid rgba(255,255,255,0.16);border-radius:8px;background:rgba(255,255,255,0.08);color:#f8fafc;padding:7px 10px;font:12px/1 Inter,system-ui,sans-serif;cursor:pointer;transition:background 140ms ease,transform 140ms ease;';
+    return button;
+  }
+
+  _updateTimeTravelSliderBounds() {
+    const count = this._timeTravel.commits?.length || 0;
+    if (this._timeTravel.slider) {
+      this._timeTravel.slider.max = String(Math.max(count - 1, 0));
+      this._timeTravel.slider.disabled = count === 0;
+      this._timeTravel.slider.value = String(Math.min(this._timeTravel.index || 0, Math.max(count - 1, 0)));
+    }
+    if (this._timeTravel.playButton) this._timeTravel.playButton.disabled = count === 0;
+  }
+
+  _updateTimeTravelContext(commit, index, files) {
+    if (this._timeTravel.label) {
+      this._timeTravel.label.textContent = commit
+        ? 'Commit ' + (index + 1) + ' / ' + this._timeTravel.commits.length + ': ' + (commit.hash || '').slice(0, 8)
+        : 'No Git history available';
+    }
+    if (this._timeTravel.detail) {
+      const date = commit?.date ? new Date(commit.date).toLocaleString() : '';
+      this._timeTravel.detail.textContent = commit
+        ? date + ' - ' + (commit.message || 'No message') + ' - ' + files.length + ' file' + (files.length === 1 ? '' : 's')
+        : 'No commit selected';
+    }
+    this._emit('context-panel-update', { type: 'git-commit', commit, files });
+  }
+
+  async _loadCommitHistory() {
+    const workspace = this._workspacePath();
+    const key = workspace || '__default__';
+    if (VRViewer._gitHistoryCache.has(key)) return VRViewer._gitHistoryCache.get(key);
+
+    const res = await fetch(this._apiUrl('/api/git/history', { path: workspace }));
+    if (!res.ok) throw new Error('Failed to fetch Git history: ' + res.status);
+    const commits = await res.json();
+    const normalised = Array.isArray(commits) ? commits : [];
+    VRViewer._gitHistoryCache.set(key, normalised);
+    return normalised;
+  }
+
+  async _loadCommitDiff(commit) {
+    if (!commit?.hash) return commit;
+    const res = await fetch(this._apiUrl('/api/git/commit', { path: this._workspacePath(), hash: commit.hash }));
+    if (!res.ok) return commit;
+    const diff = await res.json();
+    return { ...commit, ...diff, filesChanged: diff.filesChanged || diff.files || commit.filesChanged || [] };
+  }
+
+  _pulseTimeTravelNode(index, durationMs) {
+    const data = this.nodeData?.[index];
+    if (!data) return;
+
+    const baseScale = data.scale || SCALE_MIN;
+    this.updateNodeColor(index, TIME_TRAVEL_HIGHLIGHT_COLOR);
+    this.updateNodeScale(index, Math.min(SCALE_MAX, baseScale * 1.7));
+
+    const existing = this._timeTravelHighlightTimers.get(index);
+    if (existing) clearTimeout(existing.timer);
+
+    const timer = setTimeout(() => {
+      this.updateNodeColor(index, data.color || COLOR_DEFAULT);
+      this.updateNodeScale(index, baseScale);
+      this._timeTravelHighlightTimers.delete(index);
+    }, durationMs);
+
+    this._timeTravelHighlightTimers.set(index, { index, timer, color: data.color, scale: baseScale });
+  }
+
+  _findNodeIndexByPath(filePath) {
+    if (!filePath || !this.nodeIdMap) return undefined;
+    const wanted = this._normalisePath(filePath);
+    if (this.nodeIdMap.has(filePath)) return this.nodeIdMap.get(filePath);
+    for (const [nodeId, idx] of this.nodeIdMap.entries()) {
+      const nodePath = this._normalisePath(this.nodeData?.[idx]?.path || this.nodeData?.[idx]?.id || nodeId);
+      if (nodePath === wanted || nodePath.endsWith('/' + wanted) || wanted.endsWith('/' + nodePath)) return idx;
+    }
+    return undefined;
+  }
+
+  _normaliseChangedFiles(commit) {
+    const raw = commit?.filesChanged || commit?.files || commit?.changedFiles || [];
+    return raw.map((file) => typeof file === 'string' ? file : file.path || file.filePath || file.name).filter(Boolean);
+  }
+
+  _commitHasFiles(commit) {
+    return this._normaliseChangedFiles(commit).length > 0;
+  }
+
+  _normalisePath(value) {
+    return String(value || '').replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
+  }
+
+  _workspacePath() {
+    return this.config.workspacePath || this.config.workspace || this.workspacePath || '';
+  }
+
+  _apiUrl(path, params = {}) {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) search.set(key, value);
+    }
+    const base = this.config.apiBaseUrl || '';
+    return base + path + (search.toString() ? '?' + search.toString() : '');
+  }
+
+  _normaliseSpokenDate(param) {
+    return String(param || '').replace(/\?$/, '').trim().toLowerCase();
+  }
+
+  _commitMatchesSpokenDate(commit, spoken) {
+    if (!commit?.date || !spoken) return false;
+    const date = new Date(commit.date);
+    if (Number.isNaN(date.getTime())) return false;
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const iso = date.toISOString().slice(0, 10);
+    return weekday === spoken || iso === spoken;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
   //  MEMORY MANAGEMENT & DISPOSE (§8)
   // ═══════════════════════════════════════════════════════════════════════
 
@@ -1355,6 +1760,10 @@ class VRViewer {
   dispose() {
     const memBefore = this._checkMemoryUsage();
     if (this.animationId !== null) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+    this.stopTimeTravelAnimation();
+    this.clearTimeTravelHighlights();
+    if (this._timeTravel.overlay?.parentNode) this._timeTravel.overlay.parentNode.removeChild(this._timeTravel.overlay);
+    if (this._timeTravel.controls?.parentNode) this._timeTravel.controls.parentNode.removeChild(this._timeTravel.controls);
     window.removeEventListener('resize', this._onResize);
     this._cleanupWeakRefs();
     if (this.controls) { this.controls.dispose(); this.controls = null; }
@@ -1370,6 +1779,7 @@ class VRViewer {
     }
     this.scene = this.camera = this.nodeIdMap = null;
     this.lodData = []; this.edgeSegments = []; this._clusterAggregateMesh = null;
+    this._timeTravel.overlay = this._timeTravel.slider = this._timeTravel.label = this._timeTravel.detail = this._timeTravel.playButton = this._timeTravel.timeButton = this._timeTravel.heatmapButton = this._timeTravel.controls = null;
     this._frameTimes = []; this._lodTransitions = [];
     this._sphereGeomFull?.dispose(); this._sphereGeomMid?.dispose(); this._glowGeom?.dispose();
     this._sphereGeomFull = this._sphereGeomMid = this._glowGeom = null;

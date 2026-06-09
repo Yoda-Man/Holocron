@@ -7,11 +7,11 @@
  * Lifecycle hook signatures follow 05-YodaMan-Integration.md §1.
  * Manifest fields (plugin.json) follow 02-TSD.md §3.
  *
- * @module graphify-vr-explorer/main
+ * @module holocron-vr/main
  */
 
 module.exports = {
-  name: 'graphify-vr-explorer',
+  name: 'holocron-vr',
 
   // ─── Lifecycle: onLoad ────────────────────────────────────────────────
   /**

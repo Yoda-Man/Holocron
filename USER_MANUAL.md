@@ -100,18 +100,18 @@ In a future release, you'll be able to install Holocron VR directly from the **Y
 
 ### 3.2 Manual Installation (Current)
 
-1. **Download the plugin** from the [releases page](https://github.com/Yoda-Man/Holocron/releases). Get the `graphify-vr-explorer.zip` file from the latest release.
+1. **Download the plugin** from the [releases page](https://github.com/Yoda-Man/Holocron/releases). Get the `holocron-vr.zip` file from the latest release.
 
 2. **Extract the ZIP** to your YodaMan plugins directory:
 
    | OS | Path |
    |---|---|
-   | **macOS/Linux** | `~/.yodaman/plugins/graphify-vr-explorer/` |
-   | **Windows** | `%APPDATA%\YodaMan\plugins\graphify-vr-explorer\` |
+   | **macOS/Linux** | `~/.yodaman/plugins/holocron-vr/` |
+   | **Windows** | `%APPDATA%\YodaMan\plugins\holocron-vr\` |
 
    The final structure should look like:
    ```
-   plugins/graphify-vr-explorer/
+   plugins/holocron-vr/
    ├── plugin.json
    ├── main.js
    ├── frontend/
@@ -137,7 +137,7 @@ For developers who want to build from the source code:
 
 ```bash
 git clone https://github.com/Yoda-Man/Holocron.git
-cd graphify-vr-explorer
+cd holocron-vr
 npm install
 npm run build
 ```
@@ -207,7 +207,37 @@ The panel shows:
 | `Ctrl+Shift+R` | Return to origin |
 | `Ctrl+Shift+D` | Toggle debug overlay (FPS + memory) |
 
-### 4.5 Filtering
+### 4.5 LOD System (Level of Detail)
+
+To keep performance smooth, Holocron VR uses a 4-tier LOD system:
+
+| Tier | Distance from Camera | What you see |
+|---|---|---|
+| **FULL** | 0 → 5 units | Full-detail sphere, glow effects visible |
+| **MID** | 5 → 15 units | Reduced detail sphere, glow still visible |
+| **DOT** | 15 → 30 units | Tiny dot (point sprite), glow hidden |
+| **CULLED** | > 30 units | Not rendered (invisible) |
+
+- **Hysteresis** — A 0.5-unit buffer prevents flickering when you're at a boundary
+- **Transition animation** — Nodes smoothly interpolate over 10 frames when changing tier
+- **Auto-performance mode** — If your FPS drops below 45 for 3+ seconds, LOD thresholds are automatically reduced by 30%
+
+You can adjust the LOD thresholds in **Settings → Level of Detail**.
+
+### 4.6 Edge Visual Encoding
+
+Lines between spheres represent relationships between files:
+
+| Colour | Thickness | Meaning |
+|---|---|---|
+| **⚪ White** | 0.01 units | Import / `require` statement |
+| **🟠 Orange** | 0.02 units | Function call |
+| **🟣 Purple** | 0.015 units | Inheritance (`extends` / `implements`) |
+| **🔵 Teal** | 0.01 units | UI Component composition |
+
+Edges are automatically hidden when both endpoints are more than 15 units from the camera. When clusters are far away (> 20 units), individual edges are replaced by a single aggregated line between cluster centres.
+
+### 4.7 Filtering
 
 You can filter which files appear using the Settings panel:
 
@@ -217,7 +247,7 @@ You can filter which files appear using the Settings panel:
 - **Only changed in 30 days** — Show only recently modified files
 - **Language** — Show only files in a specific language (Dart, TypeScript, etc.)
 
-Filters apply instantly — no reload needed.
+Filters apply instantly — no reload needed. Hidden nodes keep their position in the layout so they reappear exactly where they were.
 
 ---
 
@@ -246,12 +276,30 @@ For the full immersive experience, you'll need a WebXR-compatible VR headset.
 | **Orbit / rotate** | Move the **right thumbstick** left or right | The constellation spins around you |
 | **Return to centre** | Squeeze **both grip buttons** at once | Snaps you back to the starting position |
 | **Select a node** | Point the laser (ray) at a sphere + pull the **trigger** | A panel appears with file info |
-| **Pin a panel** | Point at a sphere + **hold the trigger** for 1 second | The info panel stays floating in space |
+| **Pin a panel** | Point at a sphere + **hold the trigger** for 1 second | The info panel stays floating in space, pinned to that location |
 | **Open menu** | Press the **left menu button** | Shows the in-VR options menu |
+
+The controller ray (laser pointer) uses the Quest controller's `targetRaySpace` to cast into the scene. When the trigger is pressed, a Three.js `Raycaster` intersection test identifies which node you're pointing at — the same system used for desktop mouse clicks.
 
 [screenshot: VR controller diagram showing button mappings]
 
-### 5.3 VR Comfort Tips
+### 5.3 Performance in VR
+
+VR requires sustained 72 FPS (Quest 2) or 90 FPS (Quest 3). The plugin includes several systems to maintain this:
+
+- **Single InstancedMesh** — All nodes render in one draw call (not thousands of individual spheres)
+- **SIMD WASM** — The layout engine uses WebAssembly SIMD instructions for 10× faster computation
+- **LOD system** — Nodes far from you automatically switch to lower-detail versions
+- **Edge culling** — Edges are hidden when both endpoints are more than 15 units away
+- **Cluster aggregation** — Distant clusters show one line instead of hundreds
+
+If you experience lag:
+1. Open **Settings** and reduce **Max Nodes** to 1,000 or 500
+2. Lower the **LOD Near/Mid/Far thresholds**
+3. Enable **VR Comfort Mode**
+4. Use a **Link cable** instead of Air Link for the best bandwidth
+
+### 5.4 VR Comfort Tips
 
 - If you feel motion sickness, enable **VR Comfort Mode** in Settings. This reduces rotation speed and smooths movement.
 - Start with **Desktop 3D mode** to get familiar with the layout before jumping into VR.
@@ -487,7 +535,28 @@ Click **Reset Defaults** to restore all settings to their factory values.
    - **Windows:** VS Code usually adds itself to PATH during installation.
 3. Try opening a file manually in VS Code to confirm it's working.
 
-### 9.8 Cached View is Stale
+### 9.8 Debug Overlay (Ctrl+Shift+D)
+
+**Symptom:** You want to see live FPS and memory usage.
+
+**Fix:** Press `Ctrl+Shift+D` to toggle the debug overlay. It shows:
+- **FPS** — Current frame rate
+- **Frame time** — Milliseconds per frame
+- **Heap** — Browser JS heap usage in MB
+
+The overlay updates every 500ms and is styled in cyan to match the VR theme. This is a development tool — it's hidden by default.
+
+### 9.9 Memory Leak / Performance Degradation Over Time
+
+**Symptom:** The plugin gets slower the longer you use it, or memory usage keeps growing.
+
+**Fix:**
+1. Close the VR Explorer modal and re-open it — `dispose()` releases all Three.js resources (geometries, materials, textures, renderer).
+2. If you see a `[VR] Memory leak warning` in the console, file a bug report.
+3. The plugin uses **WeakRef** for event handlers — they should be GC'd automatically when the panel closes.
+4. The `dispose()` method also terminates the layout Web Worker and frees WASM memory via `Module.free_memory()`.
+
+### 9.10 Cached View is Stale
 
 **Symptom:** The view shows old positions even after you've changed files.
 
@@ -522,13 +591,24 @@ Only the **command name** (e.g., "flyToNode") and the **matched parameter** (e.g
 
 ### 10.3 What data is logged?
 
-YodaMan maintains a local `audit-log.jsonl` file on your machine. Holocron VR writes entries like:
+Holocron VR includes a dedicated audit logger (`backend/auditLogger.js`) that writes to YodaMan's local `audit-log.jsonl` file. Entries are structured and minimal:
 
 ```
-{ "userAction": "vr_node_select", "nodePath": "src/auth/AuthService.dart" }
-{ "userAction": "vr_voice_command", "commandName": "flyToNode" }
-{ "userAction": "vr_explorer_open", "nodeCount": 847 }
+{ "userAction": "vr_explorer_open",     "nodeCount": 847 }
+{ "userAction": "vr_node_select",       "nodePath": "src/auth/AuthService.dart" }
+{ "userAction": "vr_voice_command",     "commandName": "flyToNode" }
+{ "userAction": "vr_ask_agent",         "nodeId": "src/auth/AuthService.dart", "taskId": "abc123" }
+{ "userAction": "vr_save_view",         "taskId": "xyz789" }
+{ "userAction": "vr_open_file",         "nodePath": "src/auth/AuthService.dart" }
+{ "userAction": "vr_explorer_close",    "sessionDurationMs": 45230 }
 ```
+
+**Privacy guarantees enforced in CI:**
+
+- Audited actions are tested by 7 dedicated Playwright tests in `tests/privacy/`
+- The `audit_log_contains_no_code` test verifies no entry contains file contents
+- The `voice_transcript_not_logged` test verifies all 10 utterance types log the action name only
+- The `no_external_fetch` test asserts zero non-localhost network requests during a full session
 
 **This log never leaves your machine.** It is only accessible to you through YodaMan's interface. No telemetry, no analytics, no tracking.
 
@@ -560,32 +640,50 @@ Yes. The audit log is stored at `~/.yodaman/audit-log.jsonl` (or the equivalent 
 ## Appendix A: File Overview
 
 ```
-graphify-vr-explorer/
-├── plugin.json          ← Plugin manifest (name, version, permissions)
-├── main.js              ← Entry point (lifecycle hooks for YodaMan)
-├── frontend/
-│   ├── VRViewer.js      ← Three.js 3D scene manager
-│   ├── VRController.js  ← WebXR / VR controller input
-│   ├── InfoPanel.jsx    ← Node info panel (React)
-│   ├── SettingsPanel.jsx← Settings drawer (React)
-│   ├── UIPanel.jsx      ← Plugin card component
-│   ├── voiceCommands.js ← Speech recognition + grammar
-│   └── layoutWorker.js  ← Web Worker (WASM layout engine)
-├── backend/
-│   ├── graphProcessor.js← Normalizes Graphify API data
-│   ├── layoutStore.js   ← IndexedDB cache for 3D positions
-│   ├── agentClient.js   ← "Ask Agent" integration
-│   ├── viewStore.js     ← Save/restore VR views as tasks
-│   ├── auditLogger.js   ← Privacy-safe audit logging
-│   ├── vscodeClient.js  ← "Open in VS Code" integration
-│   └── perfLogger.js    ← Performance profiling (dev only)
-├── wasm-src/
-│   ├── layout_engine.cpp← C++ force-directed layout engine
-│   └── CMakeLists.txt   ← Emscripten build
+holocron-vr/
+├── plugin.json              ← Plugin manifest (name, version, permissions)
+├── main.js                  ← Entry point (lifecycle hooks for YodaMan)
+├── frontend/                ← 3D scene, UI, Web Worker, voice
+│   ├── VRViewer.js          ← Three.js scene manager (InstancedMesh, LOD, edges, filters, raycasting)
+│   ├── VRController.js      ← WebXR session + 6-DoF Quest controller input
+│   ├── InfoPanel.jsx        ← Node info panel (React) — deps, agent, VS Code, pin
+│   ├── SettingsPanel.jsx    ← Settings drawer (React) — LOD, filters, voice, theme
+│   ├── UIPanel.jsx          ← Plugin card component
+│   ├── voiceCommands.js     ← Speech recognition + 19-command grammar
+│   ├── layoutWorker.js      ← Web Worker (WASM engine + JS fallback)
+│   └── layout_engine.mjs    ← Compiled WASM module (Emscripten)
+├── backend/                 ← Data pipeline, cache, agent context, integrations
+│   ├── graphProcessor.js    ← Normalizes Graphify API data (nodes, edges, clusters, hash)
+│   ├── layoutStore.js       ← IndexedDB 3D position cache (LRU eviction)
+│   ├── agentClient.js       ← "Ask Agent" API orchestration
+│   ├── agentContextProvider.js← Multi-source context aggregator (VR, Git, files, Graphify)
+│   ├── viewStore.js         ← Save/restore VR views as YodaMan tasks
+│   ├── auditLogger.js       ← Privacy-safe audit logging (8 action types, zero-exfil)
+│   ├── vscodeClient.js      ← "Open in VS Code" integration + keyboard shortcut
+│   └── perfLogger.js        ← Performance profiling (__DEV__ stripped in production)
+├── wasm-src/                ← C++ WASM layout engine (SIMD via wasm_simd128.h)
+│   ├── layout_engine.cpp    ← SIMD-accelerated force-directed layout (52 SIMD intrinsics)
+│   ├── force_directed.h     ← Micro-layout (O(n²) repulsion + attraction + damping)
+│   ├── macro_layout.h       ← Macro-layout (golden-angle sphere cluster placement)
+│   └── CMakeLists.txt       ← Emscripten build (Release/Debug)
 ├── assets/
-│   ├── icon.svg         ← Plugin icon
-│   └── shaders/         ← GLSL shaders
-└── tests/               ← Unit, integration, privacy, and benchmark tests
+│   ├── icon.svg             ← Plugin icon (constellation globe)
+│   └── shaders/             ← GLSL shaders (node.vert, node.frag for glow + Fresnel)
+├── scripts/                 ← Benchmarks, utilities
+│   ├── bench-layout.js      ← Layout speed (5 graph sizes: 100–5,000 nodes)
+│   ├── bench-fps.js         ← FPS stability (60s Playwright session, P10 metric)
+│   ├── bench-memory.js      ← Memory leak detection (10 open/close cycles, < 20 MB)
+│   └── test-wasm.mjs        ← WASM export verification (28-test suite)
+├── tests/                   ← 237 automated tests (CI-gated)
+│   ├── unit/                ← 173 Jest tests (layout, voice parser, LOD, graph processor)
+│   ├── integration/         ← 57 Playwright tests (API, lifecycle, WASM loading)
+│   └── privacy/             ← 7 Playwright tests (network isolation, audit log, transcripts)
+├── .github/workflows/       ← CI/CD pipelines
+│   ├── ci.yml               ← Validate on every push (build, test, audit, privacy scan)
+│   └── release.yml          ← Package + GitHub Release on tag (changelog, zip, pre-release detection)
+├── USER_MANUAL.md           ← Complete 600+ line user manual
+├── store.json               ← YodaMan Plugin Registry metadata
+└── README.md
 ```
 
 ---
@@ -594,6 +692,7 @@ graphify-vr-explorer/
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.1.0 | 2026-06-08 | Edge rendering, LOD transitions, memory optimization, agent context provider, privacy audit suite, CI/CD pipelines |
 | 1.0.0 | 2026-06-08 | Initial release |
 
 ---
