@@ -12,6 +12,7 @@
 
 module.exports = {
   name: 'holocron-vr',
+  permissions: ['graphify:read', 'agent:invoke', 'audit:write', 'task:create', 'desktop:openFile', 'storage:indexeddb', 'webxr', 'speech', 'git:read', 'upload:temp', 'filesystem:read-selected'],
 
   // ─── Lifecycle: onLoad ────────────────────────────────────────────────
   /**
