@@ -14,6 +14,16 @@ module.exports = {
   name: 'holocron-vr',
   permissions: ['graphify:read', 'agent:invoke', 'audit:write', 'task:create', 'desktop:openFile', 'storage:indexeddb', 'webxr', 'speech', 'git:read', 'upload:temp', 'filesystem:read-selected'],
 
+  async execute(params = {}) {
+    if (params._action === 'open') {
+      return { opened: true, renderer: 'yodaman-host', project: params.project, message: 'Holocron VR launch accepted by the YodaMan host.' };
+    }
+    if (params._action === 'enable') return { enabled: true };
+    if (params._action === 'disable') return { disabled: true };
+    if (params._action === 'unload') return { unloaded: true };
+    return { ok: true, name: 'holocron-vr' };
+  },
+
   // ─── Lifecycle: onLoad ────────────────────────────────────────────────
   /**
    * Called once when YodaMan reads the plugin manifest.

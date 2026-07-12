@@ -3,6 +3,7 @@
  */
 
 import { jest } from '@jest/globals';
+import { setTimeout, clearTimeout } from 'node:timers';
 
 let VRViewer;
 

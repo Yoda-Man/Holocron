@@ -6,7 +6,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && bash scripts/package-release.sh",
     "dev": "vite build --watch",
     "build:wasm": "emcc wasm-src/layout_engine.cpp -O3 -msimd128 -flto -s WASM=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='worker' -s INITIAL_MEMORY=33554432 -s MAXIMUM_MEMORY=52428800 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='[\"_init_graph\",\"_get_node_input_ptr\",\"_get_edge_input_ptr\",\"_compute_layout\",\"_get_positions_ptr\",\"_update_positions\",\"_get_node_count\",\"_free_memory\",\"_set_convergence_threshold\",\"_set_repulsion_k\",\"_set_attraction_k\",\"_set_damping\",\"_set_max_iterations\",\"_set_scene_radius\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -o frontend/layout_engine.mjs",
     "build:wasm:debug": "emcc wasm-src/layout_engine.cpp -O0 -g -msimd128 -s WASM=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='worker' -s ASSERTIONS=2 -s INITIAL_MEMORY=33554432 -s MAXIMUM_MEMORY=52428800 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='[\"_init_graph\",\"_get_node_input_ptr\",\"_get_edge_input_ptr\",\"_compute_layout\",\"_get_positions_ptr\",\"_update_positions\",\"_get_node_count\",\"_free_memory\",\"_set_convergence_threshold\",\"_set_repulsion_k\",\"_set_attraction_k\",\"_set_damping\",\"_set_max_iterations\",\"_set_scene_radius\"]' -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\"]' -o frontend/layout_engine_debug.mjs",
