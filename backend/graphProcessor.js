@@ -45,6 +45,13 @@ const EDGE_TYPE_MAP = {
   composition: 'composition',
 };
 
+const LANGUAGE_BY_EXTENSION = {
+  dart: 'dart', js: 'js', jsx: 'js', mjs: 'js', cjs: 'js',
+  ts: 'ts', tsx: 'tsx', json: 'json', yaml: 'yaml', yml: 'yaml',
+  toml: 'toml', md: 'md', css: 'css', scss: 'scss', html: 'html',
+  py: 'py', rs: 'rs', go: 'go', java: 'java', kt: 'kotlin', swift: 'swift',
+};
+
 // ─── Internal Helpers ───────────────────────────────────────────────────
 
 /**
@@ -157,13 +164,19 @@ function normalizeNodes(apiNodes) {
       ? node.id.trim()
       : `generated-id-${index}`;
 
-    const path = typeof node.path === 'string' && node.path.trim() !== ''
-      ? node.path.trim()
+    const sourcePath = node.path || node.sourceFile || node.source_file;
+    const path = typeof sourcePath === 'string' && sourcePath.trim() !== ''
+      ? sourcePath.trim()
       : id;
 
-    const type = VALID_NODE_TYPES.has(node.type) ? node.type : 'file';
+    const rawType = node.type || node.fileType || node.file_type || node.metadata?.kind;
+    const type = VALID_NODE_TYPES.has(rawType) ? rawType : 'file';
 
-    const language = typeof node.language === 'string' ? node.language : '';
+    const explicitLanguage = node.language || node.metadata?.language;
+    const extension = path.includes('.') ? path.split('.').pop().toLowerCase() : '';
+    const language = typeof explicitLanguage === 'string' && explicitLanguage
+      ? explicitLanguage.toLowerCase()
+      : (LANGUAGE_BY_EXTENSION[extension] || '');
 
     const size = typeof node.size === 'number' && !Number.isNaN(node.size)
       ? Math.max(0, Math.floor(node.size))

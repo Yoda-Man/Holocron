@@ -35,8 +35,8 @@ const SPHERE_RADIUS     = 1;
 const SPHERE_SEGMENTS_MID = { radial: 8, height: 8 };
 
 /** Scale range based on lines of code. */
-const SCALE_MIN = 0.05;
-const SCALE_MAX = 0.3;
+const SCALE_MIN = 0.12;
+const SCALE_MAX = 0.5;
 
 /** Lines-of-code thresholds for scale mapping. */
 const LOC_MIN = 0;
@@ -130,7 +130,13 @@ const _raycaster = new THREE.Raycaster();
  */
 function getNodeColor(node) {
   const p = (node.path || node.id || '').toLowerCase();
-  const lang = (node.language || '').toLowerCase();
+  const languageAliases = {
+    javascript: 'js', typescript: 'ts', python: 'py', markdown: 'md',
+    rust: 'rs', golang: 'go', yml: 'yaml', shell: 'sh',
+  };
+  const rawLanguage = (node.language || '').toLowerCase();
+  const extension = p.includes('.') ? p.split('.').pop() : '';
+  const lang = languageAliases[rawLanguage] || rawLanguage || extension;
 
   if (node.type === 'folder') return TYPE_COLORS._folder;
   if (/\/test(s)?\//.test(p) || /\/spec\//.test(p) || /_test\./.test(p) || /\.spec\./.test(p)) {
@@ -326,9 +332,9 @@ class VRViewer {
     this._glowGeom       = new THREE.SphereGeometry(SPHERE_RADIUS, SPHERE_SEGMENTS_MID.radial, SPHERE_SEGMENTS_MID.height);
 
     // ── Main node InstancedMesh ───────────────────────────────────────
-    const nodeMat = new THREE.MeshStandardMaterial({
-      roughness:    0.6,
-      metalness:    0.1,
+    // Unlit colour keeps the constellation vivid in desktop WebGL and
+    // across headsets whose tone mapping differs from the host preview.
+    const nodeMat = new THREE.MeshBasicMaterial({
       vertexColors: true,
     });
     this.nodesMesh = new THREE.InstancedMesh(this._sphereGeomMid, nodeMat, maxNodes);
@@ -349,10 +355,12 @@ class VRViewer {
     let glowInstances = 0;
     if (glowCount > 0) {
       const glowMat = new THREE.MeshBasicMaterial({
-        color:        0x7c3aed,
+        vertexColors: true,
         transparent:  true,
-        opacity:      0.12,
+        opacity:      0.18,
         depthWrite:   false,
+        side:         THREE.BackSide,
+        blending:     THREE.AdditiveBlending,
       });
       this.glowMesh = new THREE.InstancedMesh(this._glowGeom, glowMat, glowCount);
       this.glowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -402,6 +410,7 @@ class VRViewer {
         _mat4.makeScale(gScale, gScale, gScale);
         _mat4.setPosition(px, py, pz);
         this.glowMesh.setMatrixAt(gi, _mat4);
+        this.glowMesh.setColorAt(gi, c);
         gi++;
       }
     }
@@ -412,6 +421,7 @@ class VRViewer {
 
     if (this.glowMesh) {
       this.glowMesh.instanceMatrix.needsUpdate = true;
+      if (this.glowMesh.instanceColor) this.glowMesh.instanceColor.needsUpdate = true;
       this.scene.add(this.glowMesh);
     }
 

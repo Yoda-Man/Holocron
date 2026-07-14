@@ -1,7 +1,7 @@
 {
   "name": "Holocron VR",
   "slug": "holocron-vr",
-  "version": "1.0.0",
+  "version": "0.5.1",
   "shortDescription": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
   "longDescription": "Transform YodaMan's Graphify knowledge graphs into an explorable 3D constellation. Navigate 3,000+ nodes in VR at 72 FPS with SIMD-accelerated WASM layout, use natural-language voice commands, ask YodaMan's AI agent to explain any file's architecture role, and keep your code 100% local — zero data ever leaves your machine.\n\nDesktop 3D mode works with mouse and keyboard — no headset required.\n\nKey features:\n- Desktop 3D and VR modes (Meta Quest 2/3/Pro via WebXR)\n- Voice commands: \"Where is AuthService\", \"Show me payment\", \"Hide tests\"\n- AI agent integration: click \"Ask Agent\" for architectural explanations\n- Smart filtering: hide tests, third-party code, generated files, or show only recent changes\n- Save/restore views as YodaMan tasks\n- Open files in VS Code with one click\n- LOD system for smooth performance on 3,000+ node codebases",
   "category": "visualisation",
@@ -80,7 +80,7 @@
     "url": "https://github.com/Yoda-Man"
   },
   "license": "MIT",
-  "releaseDate": "2026-06-08",
+  "releaseDate": "2026-07-14",
   "languages": ["en"],
   "platforms": ["macos", "windows", "linux"],
   "keywords": [

@@ -201,6 +201,24 @@ describe('normalizeNodes()', () => {
     expect(normalizeNodes([])).toEqual([]);
   });
 
+  test('normalizes the YodaMan Graphify map response and infers its language', () => {
+    const result = normalizeNodes([{
+      id: 'core_src_App_jsx',
+      label: 'App.jsx',
+      sourceFile: 'core/src/App.jsx',
+      sourceLocation: 'L1',
+      fileType: 'file',
+      community: 7,
+    }]);
+
+    expect(result[0]).toMatchObject({
+      path: 'core/src/App.jsx',
+      type: 'file',
+      language: 'js',
+      clusterId: 'core/src',
+    });
+  });
+
   test('preserves all nodes from sample input', () => {
     const result = normalizeNodes(SAMPLE_API_NODES);
     expect(result).toHaveLength(6);
