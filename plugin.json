@@ -4,7 +4,7 @@
   "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
   "version": "0.5.1",
   "author": "Yoda-Man",
-  "minYodaManVersion": "1.0.0",
+  "minYodaManVersion": "0.3.8",
   "mandatory": false,
   "entry": "main.js",
   "permissions": [
