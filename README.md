@@ -15,7 +15,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Tests](https://img.shields.io/badge/tests-230%20passing-brightgreen)](#testing)
-[![YodaMan](https://img.shields.io/badge/YodaMan-%E2%89%A51.0.0-7c3aed)](https://yodaman.dev)
+[![YodaMan](https://img.shields.io/badge/YodaMan-%E2%89%A50.3.8-7c3aed)](https://yodaman.dev)
 
 **Turn your codebase into an explorable 3D VR constellation.** Holocron VR transforms YodaMan's Graphify knowledge graphs into a navigable 3D universe where every file is a glowing sphere, every dependency is a connecting line, and you can fly through it all with mouse, keyboard, or a Meta Quest headset.
 
@@ -113,7 +113,7 @@ git clone https://github.com/Yoda-Man/Holocron.git ~/.yodaman/plugins/holocron-v
 
 | Requirement | Desktop 3D | VR Mode |
 |---|---|---|
-| YodaMan | ≥ v1.0.0 | ≥ v1.0.0 |
+| YodaMan | ≥ v0.3.8 | ≥ v0.3.8 |
 | Graphify plugin | Required | Required |
 | Headset | — | Meta Quest 2, Quest 3, or Quest Pro |
 | RAM | 8 GB | 16 GB |

@@ -1,6 +1,6 @@
 # Holocron VR — User Manual
 
-**Version 1.0.0** · Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.
+**Version 0.5.1** · Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.
 
 ---
 
@@ -69,7 +69,7 @@ Get from zero to exploring your codebase in under 5 minutes.
 
 | Requirement | Version | Notes |
 |---|---|---|
-| **YodaMan** | v1.0.0 or higher | Plugin host |
+| **YodaMan** | v0.3.8 or higher | Plugin host |
 | **Graphify plugin** | Any | Knowledge graph engine (bundled with YodaMan) |
 | **OS** | macOS 14+, Windows 10/11, Ubuntu 22.04 | ARM and x86 supported |
 | **Browser (Desktop)** | Chrome 120+, Edge 120+, Firefox 120+ | For standalone use outside YodaMan |
@@ -692,8 +692,8 @@ holocron-vr/
 
 | Version | Date | Changes |
 |---|---|---|
-| 1.1.0 | 2026-06-08 | Edge rendering, LOD transitions, memory optimization, agent context provider, privacy audit suite, CI/CD pipelines |
-| 1.0.0 | 2026-06-08 | Initial release |
+| 0.5.1 | 2026-07-14 | Automatic language inference, improved node path resolution, LOD transitions, memory optimization |
+| 0.5.0 | 2026-07-12 | Edge rendering, agent context provider, privacy audit suite, CI/CD pipelines |
 
 ---
 
