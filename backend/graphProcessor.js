@@ -14,6 +14,8 @@
  * @see 05-YodaMan-Integration.md §3 — API response formats
  */
 
+import { isIgnoredPath } from './ignoredPaths.js';
+
 // ─── Constants ──────────────────────────────────────────────────────────
 
 /** Maximum folder depth used to derive clusterId (02-TSD.md §5.1). */
@@ -142,7 +144,16 @@ function makeEdgeId(source, target) {
 function normalizeNodes(apiNodes) {
   if (!Array.isArray(apiNodes)) return [];
 
-  return apiNodes.map((node, index) => {
+  return apiNodes
+    // Vendored and generated trees are in the graph but are not the user's
+    // code. Left in, they dominate the constellation: on one real workspace
+    // the brightest stars were third_party tests and node_modules.
+    .filter((node) => {
+      if (!node || typeof node !== 'object') return true;
+      const candidate = node.path || node.sourceFile || node.source_file || node.id;
+      return !isIgnoredPath(typeof candidate === 'string' ? candidate : '');
+    })
+    .map((node, index) => {
     // Guard against null/undefined entries in the array — generate a
     // placeholder node instead of crashing (graceful degradation).
     if (!node || typeof node !== 'object') {

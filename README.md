@@ -65,7 +65,13 @@
 - Audited: `vr_ask_agent` logged with nodeId and taskId
 
 ### 🔍 Smart Filtering
-- Hide test files, third-party code (`node_modules`), generated files
+- **Dependencies and generated output never enter the constellation.** Nodes
+  under `node_modules`, `vendor`, `third_party`, `graphify-out`, build output
+  and language caches are dropped before layout, so the stars you see are code
+  you wrote. Graphify indexes those trees; on one real workspace they were the
+  highest-centrality nodes in the graph — the brightest stars were other
+  people's code. Matching is per path segment, so `src/buildTools/` stays.
+- Hide test files interactively
 - Show only files changed in the last 30 days
 - Filter by language (Dart, TypeScript, JavaScript, Python, JSON, YAML)
 - Efficient per-instance visibility via instance matrix (scale=0 for hidden, no mesh rebuild)

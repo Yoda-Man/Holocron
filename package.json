@@ -1,7 +1,7 @@
 {
   "name": "holocron-vr",
   "displayName": "Holocron VR",
-  "version": "0.5.1",
+  "version": "0.5.3",
   "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
   "private": true,
   "type": "module",
