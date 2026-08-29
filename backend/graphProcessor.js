@@ -186,12 +186,22 @@ function normalizeNodes(apiNodes) {
       ? Math.max(0, node.importance)
       : 0;
 
-    // Simulate changeFrequency using a simple hash of the path for
-    // deterministic behaviour in the absence of YodaMan's file watcher.
-    // In production, this comes from YodaMan's file-watcher service.
-    const changeFrequency = simulateChangeFrequency(path);
+    // Change frequency is real or it is unknown — never invented.
+    //
+    // This used to be `simulateChangeFrequency(path)`: a hash of the file name
+    // mapped to 0–10. The "Only changed in 30 days" filter ran on it, so the
+    // files it showed were the ones whose PATH hashed above the threshold. The
+    // manual promised recency and the view delivered a hash — and a test
+    // asserted the generator worked, which made the fabrication look verified.
+    //
+    // Real counts come from /api/git/heatmap, applied by the viewer once the
+    // graph is on screen. Until then this is null, meaning "not known yet" —
+    // distinct from 0, which would mean "never changed".
+    const changeFrequency = typeof node.changeFrequency === 'number' && !Number.isNaN(node.changeFrequency)
+      ? Math.max(0, node.changeFrequency)
+      : null;
 
-    const recentlyChanged = changeFrequency > 3;
+    const recentlyChanged = changeFrequency !== null && changeFrequency > 3;
 
     const clusterId = pathToClusterId(path);
 
@@ -211,29 +221,6 @@ function normalizeNodes(apiNodes) {
   });
 }
 
-/**
- * Deterministic change frequency simulation.
- *
- * Uses a lightweight hash of the path to produce a value 0–10.
- * Hot files (frequently changed) get higher values.
- * This is a stand-in until YodaMan's file-watcher data is available.
- *
- * @param {string} path
- * @returns {number} 0–10
- */
-function simulateChangeFrequency(path) {
-  if (!path) return 0;
-
-  let hash = 0;
-  for (let i = 0; i < path.length; i++) {
-    const char = path.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-
-  // Map to 0–10 range
-  return Math.abs(hash) % 11;
-}
 
 /**
  * Normalize an array of API edge objects to the internal GraphEdge format.
@@ -404,5 +391,4 @@ export {
   pathToClusterId,
   clusterDepth,
   clusterLabel,
-  simulateChangeFrequency,
 };

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 /**
  * graphProcessor.test.js — Unit Tests for Graphify Data Processing Pipeline
  *
@@ -16,7 +17,6 @@ import {
   pathToClusterId,
   clusterDepth,
   clusterLabel,
-  simulateChangeFrequency,
 } from '../../backend/graphProcessor.js';
 
 // ─── Mock Data ──────────────────────────────────────────────────────────
@@ -357,50 +357,61 @@ describe('normalizeNodes()', () => {
     expect(result[0].language).toBe('');
   });
 
-  test('changeFrequency is deterministic (same path = same value)', () => {
-    const result1 = normalizeNodes([SAMPLE_API_NODES[0]]);
-    const result2 = normalizeNodes([SAMPLE_API_NODES[0]]);
-    expect(result1[0].changeFrequency).toBe(result2[0].changeFrequency);
-  });
-
-  test('changeFrequency differs for different paths', () => {
+  test('changeFrequency does not vary by path', () => {
+    // The opposite of what this asserted before. "Differs for different
+    // paths" was only ever true because the value WAS the path, hashed —
+    // so the test proved the fabrication was working. With no API value
+    // every node is equally unknown, and git fills them in later.
     const result = normalizeNodes(SAMPLE_API_NODES);
-    // At least some nodes should have different change frequencies
-    const frequencies = new Set(result.map((n) => n.changeFrequency));
-    expect(frequencies.size).toBeGreaterThan(1);
+    expect(new Set(result.map((n) => n.changeFrequency))).toEqual(new Set([null]));
   });
 });
 
-// ─── simulateChangeFrequency ────────────────────────────────────────────
+// ─── change frequency ───────────────────────────────────────────────────
 
-describe('simulateChangeFrequency()', () => {
-  test('returns a number between 0 and 10', () => {
-    const paths = ['a', 'b', 'long/path/file.js', 'completely/different/path.py'];
-    for (const p of paths) {
-      const val = simulateChangeFrequency(p);
-      expect(typeof val).toBe('number');
-      expect(val).toBeGreaterThanOrEqual(0);
-      expect(val).toBeLessThanOrEqual(10);
+describe('changeFrequency is real or unknown, never invented', () => {
+  // This replaces a suite that asserted simulateChangeFrequency() returned a
+  // number between 0 and 10. It did — it hashed the file name. The "Only
+  // changed in 30 days" filter ran on that hash, so the files it showed were
+  // the ones whose PATH happened to hash high, and the passing test made the
+  // fabrication look verified.
+  test('is null when the API gives no value', () => {
+    const [node] = normalizeNodes([{ id: 'a.js', path: 'a.js' }]);
+    expect(node.changeFrequency).toBeNull();
+    // Null is "not known yet", which the viewer's filter treats differently
+    // from 0 — zero would claim the file has never changed.
+    expect(node.recentlyChanged).toBe(false);
+  });
+
+  test('uses the API value when there is one', () => {
+    const [node] = normalizeNodes([{ id: 'a.js', path: 'a.js', changeFrequency: 7 }]);
+    expect(node.changeFrequency).toBe(7);
+    expect(node.recentlyChanged).toBe(true);
+  });
+
+  test('does not treat a low real count as recently changed', () => {
+    const [node] = normalizeNodes([{ id: 'a.js', path: 'a.js', changeFrequency: 1 }]);
+    expect(node.changeFrequency).toBe(1);
+    expect(node.recentlyChanged).toBe(false);
+  });
+
+  test('rejects a nonsense value rather than passing it through', () => {
+    for (const bad of ['many', NaN, {}, -4]) {
+      const [node] = normalizeNodes([{ id: 'a.js', path: 'a.js', changeFrequency: bad }]);
+      expect(node.changeFrequency === null || node.changeFrequency >= 0).toBe(true);
     }
   });
 
-  test('returns integer values', () => {
-    const val = simulateChangeFrequency('src/auth/AuthService.dart');
-    expect(Number.isInteger(val)).toBe(true);
-  });
-
-  test('is deterministic', () => {
-    const val1 = simulateChangeFrequency('test/path/file.ts');
-    const val2 = simulateChangeFrequency('test/path/file.ts');
-    expect(val1).toBe(val2);
-  });
-
-  test('returns 0 for null / undefined', () => {
-    expect(simulateChangeFrequency(null)).toBe(0);
-    expect(simulateChangeFrequency(undefined)).toBe(0);
-    expect(simulateChangeFrequency('')).toBe(0);
+  test('no fabricated generator remains', () => {
+    // The specific regression: a deterministic function of the path standing in
+    // for data nobody measured.
+    // eslint-disable-next-line no-undef
+    const src = readFileSync(new URL('../../backend/graphProcessor.js', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/function simulateChangeFrequency/);
+    expect(src).not.toMatch(/hash = \(\(hash << 5\)/);
   });
 });
+
 
 // ─── normalizeEdges ─────────────────────────────────────────────────────
 

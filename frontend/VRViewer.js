@@ -232,6 +232,15 @@ class VRViewer {
     this._timeTravelPlayTimer = null;
     this._gitHeatmapActive = false;
     this._gitHeatmapOriginalColors = new Map();
+    // Spec coverage is a second, independent overlay: a node can be both a
+    // churn hotspot and undescribed, and each must restore its own colours.
+    this._specCoverageActive = false;
+    this._specCoverageOriginalColors = new Map();
+    // A third overlay, with its own colour memory for the same reason.
+    this._impactActive = false;
+    this._impactOriginalColors = new Map();
+    // Null until git data arrives; see loadChangeFrequency().
+    this._hasRealChangeData = false;
   }
 
   static _gitHistoryCache = new Map();
@@ -464,6 +473,13 @@ class VRViewer {
     this._applyFilters();
 
     console.log(`[VR] Scene rendered: ${maxNodes} nodes (${glowCount} glow) ${edges.length} edges`);
+
+    // Real change counts, once the scene exists. Fire-and-forget: the graph
+    // is already on screen and this only upgrades "unknown" to a number, so
+    // a slow or absent git repository must not delay the render.
+    this.loadChangeFrequency().catch(() => {
+      // Handled inside — unknown simply stays unknown.
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -1258,8 +1274,14 @@ class VRViewer {
         return !data.isGenerated;
 
       case 'recent':
-        // Only show recently changed files
-        return (data.changeFrequency ?? 0) >= (this._recentThreshold ?? 3);
+        // Only show recently changed files.
+        //
+        // Unknown is not zero. Without git data every node scores 0 and
+        // this filter would hide the whole graph, which reads as a broken
+        // view rather than as missing information. Show everything instead,
+        // and let hasRealChangeData() drive what the UI says about it.
+        if (data.changeFrequency === null || data.changeFrequency === undefined) return true;
+        return data.changeFrequency >= (this._recentThreshold ?? 3);
 
       default:
         return true;
@@ -1388,6 +1410,37 @@ class VRViewer {
   }
 
   /** Toggle local Git heatmap coloring for nodes. */
+  /**
+   * Show the blast radius of whatever is currently selected.
+   *
+   * Deliberately an explicit action rather than something that fires on every
+   * click: it costs a graph walk on the runtime, and a user selecting nodes to
+   * read labels has not asked "what would this break".
+   */
+  async showImpactForSelection() {
+    if (this._impactActive) {
+      this.clearImpact();
+      return false;
+    }
+    const nodeId = this._selectedNodeId;
+    if (!nodeId) {
+      this._emit('impact-change', { enabled: false, reason: 'select a node first' });
+      return false;
+    }
+    const idx = this.nodeIdMap?.get(nodeId);
+    const target = (idx !== undefined && this.nodeData?.[idx]?.path) || nodeId;
+    return this.showImpact(target);
+  }
+
+  /** Toggle the spec coverage overlay, mirroring the heatmap control. */
+  async toggleSpecCoverage() {
+    if (this._specCoverageActive) {
+      this.clearSpecCoverage();
+      return false;
+    }
+    return this.applySpecCoverage();
+  }
+
   async toggleGitHeatmap() {
     if (this._gitHeatmapActive) {
       this.clearGitHeatmap();
@@ -1395,6 +1448,201 @@ class VRViewer {
     }
     await this.applyGitHeatmap();
     return true;
+  }
+
+  /**
+   * Highlight what a change to one node would reach.
+   *
+   * The question a developer actually has in front of a dependency graph is not
+   * "what does this connect to" but "if I change this, what breaks". The
+   * runtime already answers it — /api/graphify/affected walks the graph and
+   * returns the reachable set — and the constellation is where that answer is
+   * cheapest to read: the affected nodes light up, everything else dims.
+   *
+   * @param {string} nodePath — File or graph node to assess.
+   * @param {number} [depth]  — Hops to follow. Matches the runtime default.
+   */
+  async showImpact(nodePath, depth = 2) {
+    if (!this.nodeData || !nodePath) return false;
+
+    let payload;
+    try {
+      const res = await fetch(this._apiUrl('/api/graphify/affected'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: this._workspacePath(), node: nodePath, depth })
+      });
+      if (!res.ok) return false;
+      payload = await res.json();
+    } catch (_err) {
+      // An overlay must never be the reason the graph stops rendering.
+      return false;
+    }
+
+    const affected = (payload?.affected || payload?.nodes || payload?.results || [])
+      .map((entry) => (typeof entry === 'string' ? entry : entry?.file || entry?.id || entry?.node))
+      .filter(Boolean);
+
+    if (affected.length === 0) {
+      this._emit('impact-change', { enabled: false, node: nodePath, reason: 'nothing reachable' });
+      return false;
+    }
+
+    for (let idx = 0; idx < this.nodeData.length; idx++) {
+      if (!this._impactOriginalColors.has(idx)) {
+        this._impactOriginalColors.set(idx, this.nodeData[idx]?.color?.clone?.() || this.nodeData[idx]?.color);
+      }
+    }
+
+    const origin = this._findNodeIndexByPath(nodePath);
+    let lit = 0;
+    for (const file of affected) {
+      const idx = this._findNodeIndexByPath(file);
+      if (idx === undefined) continue;
+      this.updateNodeColor(idx, 0xff9500);
+      lit += 1;
+    }
+    // The node being changed reads differently from what it reaches.
+    if (origin !== undefined) this.updateNodeColor(origin, 0xff3b30);
+
+    this._impactActive = true;
+    this._emit('impact-change', { enabled: true, node: nodePath, reached: lit, depth });
+    return true;
+  }
+
+  /** Restore colours changed by the impact overlay. */
+  clearImpact() {
+    for (const [idx, colour] of this._impactOriginalColors.entries()) {
+      this.updateNodeColor(idx, colour || this.nodeData?.[idx]?.color || COLOR_DEFAULT);
+    }
+    this._impactOriginalColors.clear();
+    this._impactActive = false;
+    this._emit('impact-change', { enabled: false });
+  }
+
+  /**
+   * Colour nodes by whether any spec describes them.
+   *
+   * This is the one thing YodaMan knows that a model reading the repository
+   * cannot work out on its own, and a constellation is the right shape for it:
+   * "which stars are dark" reads instantly, where a list of forty file paths
+   * does not.
+   *
+   * Needs no OpenSpec setup. Since 0.5.4 drift answers with zero specs written
+   * — that case is not "cannot tell", it is "nothing here is documented", which
+   * is the strongest possible answer to the coverage question.
+   */
+  async applySpecCoverage() {
+    if (!this.nodeIdMap || !this.nodeData) return false;
+
+    let drift;
+    try {
+      const res = await fetch(this._apiUrl('/api/stardust/drift', { projectRoot: this._workspacePath() }));
+      if (!res.ok) return false;
+      drift = await res.json();
+    } catch (_err) {
+      // Coverage is an overlay, never a reason the view fails to render.
+      return false;
+    }
+
+    const report = drift?.report || drift;
+    if (!report || report.available === false) {
+      this._emit('spec-coverage-change', { enabled: false, reason: report?.reason || 'unavailable' });
+      return false;
+    }
+
+    // Undocumented load-bearing modules, brightest first. The report caps its
+    // own list, so this colours what it names rather than inferring the rest.
+    const undocumented = new Map();
+    for (const entry of report.undocumented || []) {
+      if (entry?.file) undocumented.set(entry.file, Number(entry.dependents) || 0);
+    }
+
+    let marked = 0;
+    for (const [file, dependents] of undocumented.entries()) {
+      const idx = this._findNodeIndexByPath(file);
+      if (idx === undefined) continue;
+      if (!this._specCoverageOriginalColors.has(idx)) {
+        this._specCoverageOriginalColors.set(idx, this.nodeData[idx]?.color?.clone?.() || this.nodeData[idx]?.color);
+      }
+      // Weight by blast radius: the more depends on an undescribed module, the
+      // more it matters that nothing describes it.
+      const colour = dependents >= 5 ? 0xff3b30 : dependents >= 3 ? 0xff9500 : 0xffd60a;
+      this.updateNodeColor(idx, colour);
+      marked += 1;
+    }
+
+    this._specCoverageActive = true;
+    this._emit('spec-coverage-change', {
+      enabled: true,
+      marked,
+      covered: report.covered,
+      undocumentedCount: report.undocumentedCount ?? undocumented.size,
+      staleCount: report.staleCount ?? 0
+    });
+    return true;
+  }
+
+  /** Restore colours changed by the spec coverage overlay. */
+  clearSpecCoverage() {
+    for (const [idx, colour] of this._specCoverageOriginalColors.entries()) {
+      this.updateNodeColor(idx, colour || this.nodeData?.[idx]?.color || COLOR_DEFAULT);
+    }
+    this._specCoverageOriginalColors.clear();
+    this._specCoverageActive = false;
+    this._emit('spec-coverage-change', { enabled: false });
+  }
+
+  /** Fill in real change counts from git, replacing "unknown".
+   *
+   * graphProcessor no longer invents this. It used to hash the file name into
+   * 0–10, and the "Only changed in 30 days" filter ran on that hash — so the
+   * files it showed were the ones whose PATH happened to hash high. Real counts
+   * have always been one call away; the heatmap overlay below already fetched
+   * them from the same endpoint.
+   *
+   * Leaves changeFrequency null when the workspace is not a git repository.
+   * Null means "not known", which the filter treats differently from 0.
+   */
+  async loadChangeFrequency() {
+    if (!this.nodeData) return false;
+    let heatmap;
+    try {
+      const res = await fetch(this._apiUrl('/api/git/heatmap', { path: this._workspacePath() }));
+      if (!res.ok) return false;
+      heatmap = await res.json();
+    } catch (_err) {
+      // Not a repository, or git unavailable. Unknown stays unknown.
+      return false;
+    }
+
+    let applied = 0;
+    for (const entry of Array.isArray(heatmap) ? heatmap : []) {
+      const idx = this._findNodeIndexByPath(entry.filePath || entry.path);
+      if (idx === undefined || !this.nodeData[idx]) continue;
+      const count = Number(entry.changeCount ?? entry.commits ?? 0);
+      if (Number.isNaN(count)) continue;
+      this.nodeData[idx].changeFrequency = count;
+      applied += 1;
+    }
+
+    // Files git returned nothing for have genuinely not changed.
+    if (applied > 0) {
+      for (const data of this.nodeData) {
+        if (data && (data.changeFrequency === null || data.changeFrequency === undefined)) {
+          data.changeFrequency = 0;
+        }
+      }
+    }
+
+    this._hasRealChangeData = applied > 0;
+    this._emit('change-frequency-loaded', { applied, available: this._hasRealChangeData });
+    return this._hasRealChangeData;
+  }
+
+  /** True once real git change counts are in place. */
+  hasRealChangeData() {
+    return Boolean(this._hasRealChangeData);
   }
 
   /** Apply heatmap colors based on /api/git/heatmap data. */
@@ -1552,13 +1800,24 @@ class VRViewer {
     timeButton.addEventListener('click', () => this.enableTimeTravelMode());
     const heatmapButton = this._makeOverlayButton('Git Heatmap', 'Heatmap');
     heatmapButton.addEventListener('click', () => this.toggleGitHeatmap());
+    // Coverage sits beside churn deliberately: "changes often" and "nothing
+    // describes it" are different questions, and the second is the one no
+    // other tool can answer.
+    const coverageButton = this._makeOverlayButton('Spec Coverage', 'Coverage');
+    coverageButton.addEventListener('click', () => this.toggleSpecCoverage());
+    const impactButton = this._makeOverlayButton('Blast radius of selection', 'Impact');
+    impactButton.addEventListener('click', () => this.showImpactForSelection());
     controls.appendChild(timeButton);
     controls.appendChild(heatmapButton);
+    controls.appendChild(coverageButton);
+    controls.appendChild(impactButton);
     this.container.appendChild(controls);
 
     this._timeTravel.controls = controls;
     this._timeTravel.timeButton = timeButton;
     this._timeTravel.heatmapButton = heatmapButton;
+    this._timeTravel.coverageButton = coverageButton;
+    this._timeTravel.impactButton = impactButton;
   }
 
   _ensureTimeTravelOverlay() {

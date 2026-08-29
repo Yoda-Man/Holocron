@@ -244,7 +244,9 @@ You can filter which files appear using the Settings panel:
 - **Show test files** — Toggle visibility of test files
 - **Show third-party code** — Off by default. Covers `node_modules`, `vendor`, `third_party`, `graphify-out`, build output, and language caches. Turn it on to see your dependencies in the constellation.
 - **Show generated files** — Toggle auto-generated files
-- **Only changed in 30 days** — Show only recently modified files
+- **Only changed in 30 days** — Show only recently modified files, using real
+  commit counts from git. When the workspace is not a git repository the data is
+  unknown, and the filter shows everything rather than hiding the whole graph
 - **Language** — Show only files in a specific language (Dart, TypeScript, etc.)
 
 Filters apply instantly — no reload needed. Hidden nodes keep their position in the layout so they reappear exactly where they were.

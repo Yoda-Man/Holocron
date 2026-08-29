@@ -77,6 +77,20 @@
 - Filter by language (Dart, TypeScript, JavaScript, Python, JSON, YAML)
 - Efficient per-instance visibility via instance matrix (scale=0 for hidden, no mesh rebuild)
 
+### 🔬 The runtime's three-tool view, in 3D
+
+- **Spec Coverage** — colours the modules nothing describes, weighted by how
+  much depends on them. This is the thing YodaMan knows that a model reading
+  your repository cannot work out, and a constellation is the right shape for
+  it: which stars are dark reads instantly. Needs no OpenSpec setup — with zero
+  specs written, the answer is simply that nothing is documented.
+- **Blast radius** — select a node, press Impact, and see what a change to it
+  would reach. The origin and the reachable set are coloured differently.
+- **Git Heatmap** — real commit counts per file, from the runtime's git API.
+- **Change frequency is real.** It used to be a hash of the file name, and the
+  "recently changed" filter ran on that hash. It now comes from git, and stays
+  explicitly unknown when the workspace is not a repository.
+
 ### 💾 Save / Restore Views
 - Bookmark your current camera position and selection as a YodaMan Task
 - Restore any saved view from the task list with one click
