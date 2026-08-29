@@ -2,7 +2,7 @@
   "name": "holocron-vr",
   "displayName": "Holocron VR",
   "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "author": "Yoda-Man",
   "minYodaManVersion": "0.3.8",
   "mandatory": false,
