@@ -17,6 +17,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { isIgnoredPath } from '../backend/ignoredPaths.js';
 
 // ═════════════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -380,7 +381,9 @@ class VRViewer {
         language: lang,
         changeFrequency: node.changeFrequency ?? 0,
         isTest: /\/test(s)?\//.test(path) || /_test\./.test(path) || /\/spec\//.test(path) || /\.spec\./.test(path),
-        isThirdParty: /\/node_modules\//.test(path) || /\/\.pub-cache\//.test(path) || /\/vendor\//.test(path),
+        // Widened to the shared ignore list so the toggle also covers third_party,
+        // build output and language caches — not just node_modules and vendor.
+        isThirdParty: isIgnoredPath(path) || /\/\.pub-cache\//.test(path),
         isGenerated: /\.g\.dart$/.test(path) || /\.freezed\.dart$/.test(path) || /\/generated\//.test(path),
       };
 

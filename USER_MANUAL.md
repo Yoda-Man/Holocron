@@ -242,7 +242,7 @@ Edges are automatically hidden when both endpoints are more than 15 units from t
 You can filter which files appear using the Settings panel:
 
 - **Show test files** — Toggle visibility of test files
-- **Show third-party code** — Toggle node_modules, vendor, etc.
+- **Show third-party code** — Off by default. Covers `node_modules`, `vendor`, `third_party`, `graphify-out`, build output, and language caches. Turn it on to see your dependencies in the constellation.
 - **Show generated files** — Toggle auto-generated files
 - **Only changed in 30 days** — Show only recently modified files
 - **Language** — Show only files in a specific language (Dart, TypeScript, etc.)

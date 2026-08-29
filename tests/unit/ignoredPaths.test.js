@@ -58,32 +58,40 @@ describe('ignored paths', () => {
   });
 });
 
-describe('normalizeNodes drops vendored code', () => {
-  it('keeps the user\'s files and removes dependencies', () => {
+describe('the third-party filter covers everything vendored', () => {
+  // Holocron already hid dependencies by default, through a toggle a user can
+  // turn ON to reveal them. An earlier version of this change removed those
+  // nodes from the graph entirely, which hid them just as well and quietly
+  // destroyed that control — a worse product for the same view.
+  //
+  // So the list widens the EXISTING predicate rather than replacing it. These
+  // assert the paths that predicate must now recognise.
+  it.each([
+    'app/node_modules/react/index.js',
+    'vendor/lib.go',
+    'tv/third_party/player/Test.java',
+    'graphify-out/graph.json',
+    'build/output.js',
+    '__pycache__/mod.pyc',
+  ])('%s counts as third-party', (candidate) => {
+    expect(isIgnoredPath(candidate)).toBe(true);
+  });
+
+  it.each([
+    'src/app.js',
+    'lib/util.ts',
+    'src/buildTools/compile.js',
+    'packages/app/src/index.ts',
+  ])('%s does not', (candidate) => {
+    expect(isIgnoredPath(candidate)).toBe(false);
+  });
+
+  it('leaves the graph itself intact, so the toggle still has something to show', () => {
+    // normalizeNodes must NOT drop these; hiding is the viewer's decision.
     const nodes = normalizeNodes([
       { id: 'a', path: 'src/app.js' },
       { id: 'b', path: 'node_modules/react/index.js' },
-      { id: 'c', path: 'tv/third_party/player/Test.java' },
-      { id: 'd', path: 'lib/util.ts' },
-      { id: 'e', path: 'graphify-out/graph.json' },
     ]);
-
-    expect(nodes.map((n) => n.id)).toEqual(['a', 'd']);
-  });
-
-  it('still tolerates null entries rather than crashing', () => {
-    // Graceful degradation was already the contract here; filtering must not
-    // quietly remove the placeholder path that behaviour depends on.
-    const nodes = normalizeNodes([null, { id: 'a', path: 'src/app.js' }]);
-    expect(nodes).toHaveLength(2);
-    expect(nodes[1].id).toBe('a');
-  });
-
-  it('falls back to the node id when no path is given', () => {
-    const nodes = normalizeNodes([
-      { id: 'node_modules/left-pad/index.js' },
-      { id: 'src/real.js' },
-    ]);
-    expect(nodes.map((n) => n.id)).toEqual(['src/real.js']);
+    expect(nodes.map((n) => n.id)).toEqual(['a', 'b']);
   });
 });
