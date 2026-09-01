@@ -337,7 +337,8 @@ Before submitting your PR:
 
 ## License
 
-**MIT License** — Holocron VR is open source and free to use, modify, and distribute.
+**[MIT License](LICENSE)** — Copyright (c) 2026 Marwa Trust Mutemasango.
+Free to use, modify, and distribute.
 
 ```
 Copyright (c) 2026 Yoda-Man
@@ -361,4 +362,4 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 
 *Built for [YodaMan](https://yodaman.dev) — the developer workspace that understands your code.*
 
-*[Report a bug](https://github.com/Yoda-Man/Holocron/issues/new) · [Feature requests](https://github.com/Yoda-Man/Holocron/issues/new) · [Discussions](https://github.com/Yoda-Man/Holocron/discussions)*
+*[Report a bug](https://github.com/Yoda-Man/Holocron/issues/new) · [Feature requests](https://github.com/Yoda-Man/Holocron/issues/new)*
