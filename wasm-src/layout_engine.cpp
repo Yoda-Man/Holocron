@@ -103,6 +103,11 @@ static float*   g_centroids    = nullptr;   // clusterCount × 4 float32
 #define EI_WEIGHT 2
 #define EI_STRIDE 3
 
+// free_memory_guts() is defined further down but called by
+// allocate_buffers() below, so it needs declaring first. Without this the
+// translation unit does not compile at all.
+static void free_memory_guts();
+
 // ─── Buffer Allocation ──────────────────────────────────────────────────
 
 static int32_t allocate_buffers(int32_t nodeCount, int32_t edgeCount) {
@@ -640,7 +645,9 @@ int32_t compute_layout() {
       g_nodeCount, g_sceneRadius,
       g_positions, g_centroids,
       g_clusterCount,
-      nullptr,  // nodeMasses — handled inline via g_nodeInput
+      // nodeMasses is no longer a parameter: it is read inline from
+      // g_nodeInput. The argument was left behind when the signature
+      // changed, which is what broke this build.
       clusterIds);
 
   if (clustersPlaced == 0 && g_nodeCount > 0) {
