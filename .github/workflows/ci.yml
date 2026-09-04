@@ -86,7 +86,8 @@ jobs:
           grep -rnoP "fetch\(['\"](?!\/api\/)(?!http://localhost)(?!file://)([^'\"]+)" frontend/ backend/ main.js 2>/dev/null && echo "FAIL: External URL detected" || echo "PASS: All fetch URLs are localhost or /api/"
 
       - name: Verify plugin.json is valid JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('plugin.json','utf8')); console.log('plugin.json: valid')"
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('plugin.json','utf8')); console.log('plugin.json: valid')"
 
       - name: Verify dist output
         run: |
