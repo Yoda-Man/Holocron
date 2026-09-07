@@ -73,8 +73,19 @@ export default defineConfig({
           },
         },
         {
-          src: 'assets/*',
-          dest: 'assets',
+          // `src: 'assets/*'` with `dest: 'assets'` worked under
+          // vite-plugin-static-copy v1 and broke silently on v4: the glob
+          // stopped descending, so screenshots/ and shaders/ were not copied
+          // at all, and the two top-level files landed in dist/assets/assets/.
+          //
+          // The build still exited 0. A plugin shipped without node.frag and
+          // node.vert is a renderer with no shaders — exactly the breakage a
+          // green build hides.
+          //
+          // Copying the directory itself, rather than globbing its contents,
+          // produces dist/assets/... on both versions.
+          src: 'assets',
+          dest: '.',
         },
       ],
     }),
