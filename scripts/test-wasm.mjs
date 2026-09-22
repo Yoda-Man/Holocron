@@ -304,7 +304,7 @@ test('Output positions contain finite values within scene radius', () => {
     // Positions should be within reasonable scene bounds
     assert(
       Math.abs(heap[i]) < 100,
-      `Position[${i}] = ${heap[i}] exceeds expected bounds`
+      `Position[${i}] = ${heap[i]} exceeds expected bounds`
     );
   }
 });
