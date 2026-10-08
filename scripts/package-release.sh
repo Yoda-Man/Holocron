@@ -15,6 +15,15 @@ ARCHIVE_PATH="$PLUGIN_DIR/holocron-vr-${npm_package_version}.zip"
 # reason, and nobody saw it because the workflow could not parse anyway.
 DOWNLOADS_DIR="$PLUGIN_DIR/../core/website/downloads"
 
+# The built plugin must not reference source-only .jsx files: YodaMan loads the
+# compiled .js. The Vite 8 upgrade silently broke the rewrite once (it stopped
+# matching backtick strings), so the packaged artifact is checked, not trusted.
+if grep -rqE '\.jsx["'"'"'`#]' "$PLUGIN_DIR/dist" --include='*.js'; then
+  echo "dist/ still references .jsx files:" >&2
+  grep -rnoE '[^"'"'"'`]*\.jsx["'"'"'`#]' "$PLUGIN_DIR/dist" --include='*.js' >&2
+  exit 1
+fi
+
 rm -f "$ARCHIVE_PATH"
 
 zip -qr "$ARCHIVE_PATH" \
