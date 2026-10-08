@@ -36,6 +36,8 @@
  * @see 02-TSD.md §6.3       — Force-directed algorithm spec
  */
 
+import { bindLayoutEngine } from './bindLayoutEngine.js';
+
 // ─── Module-level State ─────────────────────────────────────────────────
 
 /** WASM module instance (Emscripten-wrapped), or null if not loaded. */
@@ -89,22 +91,7 @@ async function loadWasmModule() {
       await import(/* webpackIgnore: true */ './layout_engine.mjs')
     ).default;
 
-    Module = await moduleFactory();
-
-    // Verify that all required exports are present
-    const required = [
-      'init_graph', 'get_node_input_ptr', 'get_edge_input_ptr',
-      'compute_layout', 'get_positions_ptr', 'update_positions',
-      'get_node_count', 'free_memory',
-      'set_convergence_threshold', 'set_repulsion_k',
-      'set_attraction_k', 'set_damping', 'set_max_iterations',
-      'set_scene_radius',
-    ];
-
-    const missing = required.filter((name) => typeof Module[name] !== 'function');
-    if (missing.length > 0) {
-      throw new Error(`WASM module missing exports: ${missing.join(', ')}`);
-    }
+    Module = bindLayoutEngine(await moduleFactory());
 
     wasmAvailable = true;
     console.log('[VR] WASM layout engine loaded');
