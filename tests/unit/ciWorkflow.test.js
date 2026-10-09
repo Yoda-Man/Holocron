@@ -110,6 +110,18 @@ describe('CI still compiles the WASM engine', () => {
         }
     });
 
+    it('runs the compiled engine, not just compiles it', () => {
+        // Compiling proves the C++ is valid; only running it proves it lays
+        // out a graph. The engine shipped a buffer overrun that produced NaN
+        // positions while every compile in CI was green.
+        expect(ci).not.toBeNull();
+        const steps = ((ci && ci.jobs.validate.steps) || []).map((s) => JSON.stringify(s));
+        const build = steps.findIndex((s) => s.includes('build:wasm'));
+        const run = steps.findIndex((s) => s.includes('test:wasm'));
+        expect(run).toBeGreaterThan(build);
+        expect(build).toBeGreaterThanOrEqual(0);
+    });
+
     it('runs the build before the tests that depend on it', () => {
         expect(ci).not.toBeNull();
         const steps = ((ci && ci.jobs.validate.steps) || []).map((s) => JSON.stringify(s));

@@ -37,8 +37,12 @@ function rewriteJsxPaths() {
     generateBundle(_, bundle) {
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type === 'chunk' && typeof chunk.code === 'string') {
-          // Match .jsx followed by a quote (" or ') or a hash fragment (#)
-          chunk.code = chunk.code.replace(/\.jsx(["'#])/g, '.js$1');
+          // Match .jsx followed by a quote (", ' or `) or a hash fragment (#).
+          // Backticks matter: Vite 8 (rolldown) emits string literals as
+          // template strings, so a "/'-only match stopped rewriting and the
+          // built plugin card pointed at ./frontend/UIPanel.jsx, which the
+          // build does not contain.
+          chunk.code = chunk.code.replace(/\.jsx(["'`#])/g, '.js$1');
         }
       }
     },

@@ -35,6 +35,7 @@
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 import fs from 'fs';
+import { bindLayoutEngine, LAYOUT_ENGINE_EXPORTS } from '../frontend/bindLayoutEngine.js';
 
 // ─── Configuration ──────────────────────────────────────────────────────
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -78,25 +79,7 @@ function assertNear(actual, expected, tolerance, label) {
 
 // ─── Required Export Names ──────────────────────────────────────────────
 // From 04-WASM-Spec.md §2.1 and §2.2
-const REQUIRED_EXPORTS = [
-  // Core layout functions (§2.1)
-  'init_graph',
-  'get_node_input_ptr',
-  'get_edge_input_ptr',
-  'compute_layout',
-  'get_positions_ptr',
-  'update_positions',
-  'get_node_count',
-  'free_memory',
-
-  // Configuration functions (§2.2)
-  'set_convergence_threshold',
-  'set_repulsion_k',
-  'set_attraction_k',
-  'set_damping',
-  'set_max_iterations',
-  'set_scene_radius',
-];
+const REQUIRED_EXPORTS = LAYOUT_ENGINE_EXPORTS;
 
 // ─── Main ────────────────────────────────────────────────────────────────
 console.log('\nHolocron VR — WASM Layout Engine Test Suite');
@@ -130,7 +113,20 @@ try {
   // the path contains characters that could be interpreted specially.
   const moduleURL = pathToFileURL(modulePath).href;
   const moduleFactory = (await import(moduleURL)).default;
-  Module = await moduleFactory();
+  // The engine is built with ENVIRONMENT='worker', so on its own it fetches
+  // its .wasm with XMLHttpRequest, which Node does not have. That made this
+  // script fail on load every time, and since nothing ran it, the compiled
+  // engine was never actually executed anywhere. Instantiating the bytes
+  // ourselves skips the fetch and tests the exact binary that ships.
+  // (instantiateWasm, not wasmBinary: this Emscripten only reads the former
+  // from the caller unless the build opts in to more.)
+  const bytes = fs.readFileSync(modulePath.replace(/\.mjs$/, '.wasm'));
+  Module = bindLayoutEngine(await moduleFactory({
+    instantiateWasm(imports, receive) {
+      WebAssembly.instantiate(bytes, imports).then(({ instance, module }) => receive(instance, module));
+      return {};
+    },
+  }));
   console.log('  ✓ layout_engine module loaded\n');
 } catch (err) {
   console.error('✗ Failed to load layout_engine module:', err.message);
@@ -415,6 +411,32 @@ test('Re-init after free works correctly', () => {
   Module.free_memory();
 });
 
+test('Unclustered graph stays finite (no cross-node writes)', () => {
+  // Every node unclustered (cluster -1), default settings: the smallest case
+  // that failed. The engine moved positions with 4-lane SIMD loads/stores on
+  // 3-float-per-node arrays, so each step also moved the NEXT node's x. With
+  // no cluster sphere to clamp it, this graph went NaN.
+  const N = 50;
+  const E = 100;
+  assert(Module.init_graph(N, E) === 0, 'init_graph failed');
+  const nodes = new Float32Array(Module.HEAPF32.buffer, Module.get_node_input_ptr(), N * 7);
+  for (let i = 0; i < N; i++) {
+    const theta = Math.acos(1 - 2 * (i + 0.5) / N);
+    const phi = Math.PI * (1 + Math.sqrt(5)) * i;
+    nodes.set([
+      20 * Math.sin(theta) * Math.cos(phi), 20 * Math.cos(theta), 20 * Math.sin(theta) * Math.sin(phi),
+      1.0, -1, 0.5, 0.0
+    ], i * 7);
+  }
+  const edges = new Int32Array(Module.HEAP32.buffer, Module.get_edge_input_ptr(), E * 3);
+  for (let i = 0; i < E; i++) edges.set([i % N, (i * 7 + 3) % N, (i % 5) + 1], i * 3);
+
+  assert(Module.compute_layout() === 0, 'compute_layout failed');
+  const pos = new Float32Array(Module.HEAPF32.buffer, Module.get_positions_ptr(), N * 3);
+  for (let i = 0; i < N * 3; i++) assert(Number.isFinite(pos[i]), `Non-finite position at ${i}`);
+  Module.free_memory();
+});
+
 console.log('\nConfiguration Functions (§2.2)');
 console.log('────────────────────────────────');
 
@@ -536,11 +558,14 @@ test('Large graph test (1000 nodes, 5000 edges)', () => {
 });
 
 // ─── Summary ────────────────────────────────────────────────────────────
+// Each result was collected and never printed, so a failure said "check
+// errors above" with nothing above to check.
+console.log('\n' + results.join('\n'));
 const total = passed + failed;
 console.log('\n' + '═'.repeat(47));
 console.log(`  ${passed}/${total} tests passed`);
 if (failed > 0) {
-  console.log(`  ${failed} test(s) failed — check errors above`);
+  console.log(`  ${failed} test(s) failed, listed above`);
   process.exit(1);
 } else {
   console.log('  All tests passed.\n');

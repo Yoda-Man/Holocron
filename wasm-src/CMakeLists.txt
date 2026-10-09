@@ -104,7 +104,8 @@ target_link_options(${WASM_OUTPUT_NAME} PRIVATE
   ]'
 
   # ── Runtime Methods ──────────────────────────────────────────────────
-  -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]'
+  # HEAPF32/HEAP32: the worker reads results through them (bindLayoutEngine).
+  -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","HEAPF32","HEAP32"]'
 
   # ── Output Path ──────────────────────────────────────────────────────
   -o "${WASM_OUTPUT_DIR}/${WASM_OUTPUT_NAME}.mjs"

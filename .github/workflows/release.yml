@@ -66,6 +66,12 @@ jobs:
           source ~/.emsdk/emsdk_env.sh
           npm run build:wasm
 
+      # Run the engine, not just compile it. Until 0.5.8 nothing executed
+      # it: test:wasm could not load the module, and the engine had a buffer
+      # overrun that turned unclustered layouts into NaN.
+      - name: Test WASM engine
+        run: npm run test:wasm
+
       - name: Build plugin bundle
         run: npm run build
 

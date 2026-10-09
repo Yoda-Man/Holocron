@@ -37,6 +37,25 @@
 // (Chromium auto-rolls back within the same binary).
 #include <wasm_simd128.h>
 
+
+// ─── Per-node vector access ─────────────────────────────────────────────
+// Positions, velocities and forces hold 3 floats per node. wasm_v128_load and
+// wasm_v128_store move 4, so using them on &positions[i * 3] read and WROTE
+// the next node's x: every integration step moved node i+1's x a second
+// time (with node i's mass), and the last node wrote one float past the end
+// of its buffer. Clusters hid it by clamping positions back into their
+// spheres; an unclustered graph doubled its way to infinity and came back
+// NaN. These touch exactly three lanes.
+static inline v128_t load3(const float* p) {
+  return wasm_f32x4_make(p[0], p[1], p[2], 0.0f);
+}
+
+static inline void store3(float* p, v128_t v) {
+  p[0] = wasm_f32x4_extract_lane(v, 0);
+  p[1] = wasm_f32x4_extract_lane(v, 1);
+  p[2] = wasm_f32x4_extract_lane(v, 2);
+}
+
 // ─── Compile-time Configuration ─────────────────────────────────────────
 // These match 04-WASM-Spec.md defaults and can be overridden at runtime
 // via the set_*() exported functions (§2.2).
@@ -464,15 +483,15 @@ static float run_force_simulation(
         const float fz = (posA[2] - posB[2]) * invDist * forceMag;
 
         // Accumulate with SIMD
-        v128_t v_forceA = wasm_v128_load(forceA);
-        v128_t v_forceB = wasm_v128_load(forceB);
+        v128_t v_forceA = load3(forceA);
+        v128_t v_forceB = load3(forceB);
         const v128_t v_f = wasm_f32x4_make(fx, fy, fz, 0.0f);
 
         v_forceA = wasm_f32x4_add(v_forceA, v_f);
         v_forceB = wasm_f32x4_sub(v_forceB, v_f);
 
-        wasm_v128_store(forceA, v_forceA);
-        wasm_v128_store(forceB, v_forceB);
+        store3(forceA, v_forceA);
+        store3(forceB, v_forceB);
       }
     }
 
@@ -522,12 +541,12 @@ static float run_force_simulation(
       const float fz = (posT[2] - posS[2]) * invDist * forceMag;
       const v128_t v_f = wasm_f32x4_make(fx, fy, fz, 0.0f);
 
-      v128_t v_fS = wasm_v128_load(forceS);
-      v128_t v_fT = wasm_v128_load(forceT);
+      v128_t v_fS = load3(forceS);
+      v128_t v_fT = load3(forceT);
       v_fS = wasm_f32x4_add(v_fS, v_f);
       v_fT = wasm_f32x4_sub(v_fT, v_f);
-      wasm_v128_store(forceS, v_fS);
-      wasm_v128_store(forceT, v_fT);
+      store3(forceS, v_fS);
+      store3(forceT, v_fT);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -545,9 +564,9 @@ static float run_force_simulation(
       const float invMass = 1.0f / nodeMass[i];
 
       // Load pos, vel, force as v128
-      v128_t v_pos = wasm_v128_load(&positions[i * 3]);
-      v128_t v_vel = wasm_v128_load(&velocities[i * 3]);
-      v128_t v_for = wasm_v128_load(&forces[i * 3]);
+      v128_t v_pos = load3(&positions[i * 3]);
+      v128_t v_vel = load3(&velocities[i * 3]);
+      v128_t v_for = load3(&forces[i * 3]);
 
       // vel = (vel + force · invMass) · damping
       v128_t v_invMass = wasm_f32x4_splat(invMass);
@@ -559,8 +578,8 @@ static float run_force_simulation(
       v_pos = wasm_f32x4_add(v_pos, v_vel);
 
       // Store updated pos and vel
-      wasm_v128_store(&positions[i * 3], v_pos);
-      wasm_v128_store(&velocities[i * 3], v_vel);
+      store3(&positions[i * 3], v_pos);
+      store3(&velocities[i * 3], v_vel);
 
       // Accumulate energy: sum(abs(vel)) for convergence check
       v128_t v_absVel = wasm_f32x4_abs(v_vel);
