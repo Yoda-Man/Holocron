@@ -19,6 +19,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { isIgnoredPath } from '../backend/ignoredPaths.js';
 
+// Keep the colours this scene was tuned on (three r128): no colour management
+// and linear output, both of which r152 changed. Set before the palette below
+// is built, since THREE.Color converts on creation.
+THREE.ColorManagement.enabled = false;
+
 // ═════════════════════════════════════════════════════════════════════════
 //  CONSTANTS
 // ═════════════════════════════════════════════════════════════════════════
@@ -183,7 +188,6 @@ class VRViewer {
 
     this.isVRActive  = false;
     this.animationId = null;
-    this.clock       = new THREE.Clock();
 
     // Three.js objects
     this.scene    = null;
@@ -262,6 +266,7 @@ class VRViewer {
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(BG_COLOR, 1);
+    this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.renderer.shadowMap.enabled = false;
     if (this.renderer.xr) this.renderer.xr.enabled = true;
 
@@ -710,8 +715,6 @@ class VRViewer {
         console.log(`[VR PERF] first_frame_ms: ${(performance.now() - startTime).toFixed(1)}`);
         this._firstFrameLogged = true;
       }
-
-      this.clock.getDelta();
 
       if (this.nodesMesh && this.lodData.length > 0) this._updateLOD();
 

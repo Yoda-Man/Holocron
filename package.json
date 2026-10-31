@@ -1,10 +1,13 @@
 {
   "name": "holocron-vr",
   "displayName": "Holocron VR",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "vite build && bash scripts/package-release.sh",
     "dev": "vite build --watch",
@@ -30,17 +33,24 @@
     "preview": "vite build && echo '--- dist/ contents ---' && find dist -type f"
   },
   "dependencies": {
-    "three": "^0.128.0",
-    "webxr-polyfill": "^2.0.0"
+    "three": "^0.187.0",
+    "webxr-polyfill": "^2.0.3"
   },
   "devDependencies": {
-    "@jest/globals": "^30.5.1",
-    "@playwright/test": "^1.62.1",
-    "@vitejs/plugin-react": "^6.1.1",
-    "jest": "^30.5.1",
-    "vite": "^8.2.2",
+    "@jest/globals": "^30.5.2",
+    "@playwright/test": "^1.64.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jest": "^30.5.2",
+    "js-yaml": "^5.5.0",
+    "playwright": "^1.64.1",
+    "vite": "^8.3.5",
     "vite-plugin-static-copy": "^4.1.1"
   },
   "author": "Yoda-Man",
-  "license": "MIT"
+  "license": "MIT",
+  "allowScripts": {
+    "@parcel/watcher": false,
+    "fsevents": false,
+    "unrs-resolver": false
+  }
 }

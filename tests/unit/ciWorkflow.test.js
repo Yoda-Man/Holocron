@@ -33,7 +33,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const WORKFLOW_DIR = join(here, '..', '..', '.github', 'workflows');
