@@ -726,30 +726,62 @@ class VRViewer {
   // ═══════════════════════════════════════════════════════════════════════
 
   start() {
-    if (this.animationId !== null) return;
+    if (this.animationId !== null || this.isVRActive) return;
     const startTime = performance.now();
 
     const animate = () => {
+      if (this.isVRActive) return; // the XR loop owns frames now
       this.animationId = requestAnimationFrame(animate);
 
       if (!this._firstFrameLogged) {
         console.log(`[VR PERF] first_frame_ms: ${(performance.now() - startTime).toFixed(1)}`);
         this._firstFrameLogged = true;
       }
-
-      if (this.nodesMesh && this.lodData.length > 0) this._updateLOD();
-
-      // Process LOD transitions (10-frame interpolation)
-      this._processLODTransitions();
-
-      this._edgeUpdateCounter++;
-      if (this._edgeUpdateCounter % 3 === 0) this.updateEdgeVisibility();
-
-      if (this.controls) this.controls.update();
-      this.renderer.render(this.scene, this.camera);
-      this._trackFPS();
+      this._renderFrame();
     };
     animate();
+  }
+
+  /** One frame of scene work and rendering, shared by the desktop and XR loops. */
+  _renderFrame() {
+    if (this.nodesMesh && this.lodData.length > 0) this._updateLOD();
+
+    // Process LOD transitions (10-frame interpolation)
+    this._processLODTransitions();
+
+    this._edgeUpdateCounter++;
+    if (this._edgeUpdateCounter % 3 === 0) this.updateEdgeVisibility();
+
+    // The headset pose drives the camera in XR; OrbitControls would fight it.
+    if (this.controls && !this.isVRActive) this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+    this._trackFPS();
+  }
+
+  _stopDesktopLoop() {
+    if (this.animationId !== null) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+  }
+
+  /**
+   * Hand rendering to three.js's WebXR loop. renderer.setAnimationLoop runs on the
+   * XR session's frames, so each frame reaches the headset, rendered once per eye.
+   * @param {(frame: XRFrame) => void} [onFrame] called before each XR render
+   */
+  startXR(onFrame) {
+    this._stopDesktopLoop();
+    this.isVRActive = true;
+    this.renderer.setAnimationLoop((_time, frame) => {
+      onFrame?.(frame);
+      this._renderFrame();
+    });
+  }
+
+  /** Stop the XR loop and resume the desktop loop. */
+  stopXR() {
+    if (!this.isVRActive) return;
+    this.renderer.setAnimationLoop(null);
+    this.isVRActive = false;
+    this.start();
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -2039,7 +2071,8 @@ class VRViewer {
 
   dispose() {
     const memBefore = this._checkMemoryUsage();
-    if (this.animationId !== null) { cancelAnimationFrame(this.animationId); this.animationId = null; }
+    this._stopDesktopLoop();
+    if (this.isVRActive) { this.renderer?.setAnimationLoop(null); this.isVRActive = false; }
     this.stopTimeTravelAnimation();
     this.clearTimeTravelHighlights();
     if (this._timeTravel.overlay?.parentNode) this._timeTravel.overlay.parentNode.removeChild(this._timeTravel.overlay);

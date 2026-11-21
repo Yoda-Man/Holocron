@@ -1,8 +1,8 @@
 /**
  * VRController.js — WebXR Session Manager for Holocron VR
  *
- * Manages WebXR device sessions (Quest 2/3), controller input, and the
- * XR animation loop. Emits events that VRViewer.js consumes to update
+ * Manages WebXR device sessions (Quest 2/3) through three.js's renderer.xr,
+ * and controller input. Emits events that VRViewer.js consumes to update
  * the scene based on headset/controller state.
  *
  * Controller mapping (08-Testing-Spec.md §3.2):
@@ -53,17 +53,11 @@ class VRController {
     /** @type {XRSession|null} Active WebXR session. */
     this.session = null;
 
-    /** @type {XRSpace|null} Reference space (local-floor). */
-    this.refSpace = null;
-
-    /** @type {XRWebGLLayer|null} */
-    this.xrLayer = null;
+    /** @type {{ray: THREE.Group, grip: THREE.Group}[]|null} From renderer.xr.getController/getControllerGrip. */
+    this._xrControllers = null;
 
     /** @type {boolean} Whether WebXR is available on this device. */
     this._available = false;
-
-    /** @type {number|null} XR animation frame handle. */
-    this._xrFrameId = null;
 
     /** @type {Map<string, object>} Controller state by handedness. */
     this._controllers = new Map();
@@ -130,13 +124,12 @@ class VRController {
   }
 
   /**
-   * Request an immersive-vr session with 'local-floor' reference space.
+   * Request an immersive-vr session and hand it to three.js's WebXR manager.
    *
-   * @param {WebGLRenderingContext} gl — The renderer's WebGL context
    * @returns {Promise<XRSession>}
    * @throws {Error} If WebXR is unavailable or session request fails
    */
-  async requestVRSession(gl) {
+  async requestVRSession() {
     if (!this._available) {
       const avail = await this.checkAvailability();
       if (!avail) {
@@ -154,53 +147,36 @@ class VRController {
       optionalFeatures: ['hand-tracking'],
     });
 
-    await this.setupSession(session, gl);
+    await this.setupSession(session);
     return session;
   }
 
   /**
-   * Set up the XR session: create WebGL layer, set up reference space,
-   * attach controller event handlers, and start the XR frame loop.
+   * Start the session through renderer.xr, attach the two controllers and
+   * switch the viewer to the XR animation loop.
    *
    * @param {XRSession} session
-   * @param {WebGLRenderingContext} gl
    */
-  async setupSession(session, gl) {
+  async setupSession(session) {
     this.session = session;
+    const { renderer } = this.viewer;
+    renderer.xr.enabled = true;
+    renderer.xr.setReferenceSpaceType('local-floor');
 
-    // ── Create XRWebGLLayer ──────────────────────────────────────────
-    this.xrLayer = new XRWebGLLayer(session, gl, {
-      antialias: true,
-      depth: true,
-      stencil: false,
-      alpha: false,
-    });
-    session.updateRenderState({ baseLayer: this.xrLayer });
-
-    // ── Reference space ──────────────────────────────────────────────
-    this.refSpace = await session.requestReferenceSpace('local-floor');
-
-    // Attach viewer reference space for the camera
-    this._viewerSpace = this.refSpace;
-
-    // ── Attach controller events ─────────────────────────────────────
-    this._attachControllerEvents(session);
-
-    // ── Handle session end ───────────────────────────────────────────
+    this._attachControllers(renderer);
     session.addEventListener('end', () => {
+      if (this.session !== session) return; // endSession() already cleaned up
       console.log('[VR] XR session ended');
       this._cleanupSession();
       this._emit('vr-end', {});
     });
 
-    session.addEventListener('visibilitychange', () => {
-      if (session.visibilityState === 'hidden') {
-        console.log('[VR] XR session hidden (occluded)');
-      }
-    });
+    await renderer.xr.setSession(session);
 
-    // ── Start XR frame loop ─────────────────────────────────────────
-    this._startXRFrameLoop();
+    this.viewer.startXR(() => {
+      this._frameCount++;
+      if (this._frameCount % CONTROLLER_POLL_INTERVAL === 0) this._pollControllerState();
+    });
 
     console.log('[VR] VR session started (local-floor)');
     this._emit('vr-ready', { session });
@@ -211,90 +187,58 @@ class VRController {
   // ═══════════════════════════════════════════════════════════════════════
 
   /**
-   * Attach WebXR controller events (select, squeeze, end) for both
-   * left and right controllers.
+   * Add three.js's controller spaces (target ray and grip) for both hands to
+   * the scene and listen for their select and squeeze events. three.js keeps
+   * their poses current every XR frame.
    *
-   * @param {XRSession} session
+   * @param {THREE.WebGLRenderer} renderer
    */
-  _attachControllerEvents(session) {
-    // ── squeeze (grip button) ───────────────────────────────────────
-    session.addEventListener('squeezestart', (event) => {
-      const hand = event.inputSource.handedness;
-      this._controllers.set(hand, {
-        ...this._controllers.get(hand),
-        squeezing: true,
-        squeezeTime: performance.now(),
+  _attachControllers(renderer) {
+    if (this._xrControllers) return; // renderer.xr returns the same groups every session
+    this._xrControllers = [0, 1].map((i) => {
+      const ray = renderer.xr.getController(i);
+      const grip = renderer.xr.getControllerGrip(i);
+      this.viewer.scene.add(ray, grip);
+      ray.addEventListener('connected', (e) => { ray.userData.handedness = e.data.handedness; });
+      ray.addEventListener('disconnected', () => {
+        this._controllers.delete(ray.userData.handedness);
+        ray.userData.handedness = null;
       });
-      this._checkBothGrips();
-    });
-
-    session.addEventListener('squeezeend', (event) => {
-      const hand = event.inputSource.handedness;
-      this._controllers.set(hand, {
-        ...this._controllers.get(hand),
-        squeezing: false,
+      ray.addEventListener('squeezestart', () => this._setSqueeze(ray, true));
+      ray.addEventListener('squeezeend', () => this._setSqueeze(ray, false));
+      ray.addEventListener('selectstart', () => {
+        this._triggerStart = performance.now();
+        this._triggerController = ray.userData.handedness;
       });
-      this._checkBothGrips();
-    });
-
-    // ── select (trigger) ─────────────────────────────────────────────
-    session.addEventListener('selectstart', (event) => {
-      const hand = event.inputSource.handedness;
-      this._triggerStart = performance.now();
-      this._triggerController = hand;
-    });
-
-    session.addEventListener('selectend', (event) => {
-      const elapsed = performance.now() - (this._triggerStart || 0);
-
-      if (this._triggerController) {
-        if (elapsed >= LONG_PRESS_MS) {
-          // Long press → pin
-          this._emit('pin-node', { handedness: this._triggerController });
-        } else {
-          // Short press → select
-          this._handleRaySelect(event.inputSource);
+      ray.addEventListener('selectend', () => {
+        const elapsed = performance.now() - (this._triggerStart || 0);
+        if (this._triggerController) {
+          if (elapsed >= LONG_PRESS_MS) this._emit('pin-node', { handedness: this._triggerController });
+          else this._handleRaySelect(ray);
         }
-      }
-
-      this._triggerStart = null;
-      this._triggerController = null;
-    });
-
-    // ── controller disconnect ────────────────────────────────────────
-    session.addEventListener('inputsourceschange', (event) => {
-      for (const src of event.removed) {
-        this._controllers.delete(src.handedness);
-      }
-      for (const src of event.added) {
-        this._controllers.set(src.handedness, {
-          squeezing: false,
-          pointing: new Float32Array(4),
-        });
-      }
+        this._triggerStart = null;
+        this._triggerController = null;
+      });
+      return { ray, grip };
     });
   }
 
+  _setSqueeze(ray, squeezing) {
+    const hand = ray.userData.handedness;
+    this._controllers.set(hand, { ...this._controllers.get(hand), squeezing });
+    this._checkBothGrips();
+  }
+
   /**
-   * Handle ray-based node selection from a controller trigger press.
+   * Cast a ray from a controller's target-ray pose and emit `node-select` on a hit.
    *
-   * Uses the controller's targetRaySpace to cast a ray into the scene.
-   *
-   * @param {XRInputSource} inputSource
+   * @param {THREE.Group} ray — a group from renderer.xr.getController()
    */
-  _handleRaySelect(inputSource) {
+  _handleRaySelect(ray) {
     if (!this.viewer || !this.viewer.nodesMesh) return;
 
-    // Get the target ray pose
-    const raySpace = inputSource.targetRaySpace;
-    if (!raySpace) return;
-
-    const pose = this.xrFrame?.getPose(raySpace, this._viewerSpace);
-    if (!pose) return;
-
-    // Ray from the controller position along its forward (-Z) direction
-    const origin = new THREE.Vector3().copy(pose.transform.position);
-    const raycaster = new THREE.Raycaster(origin, this._getControllerForward(inputSource));
+    const origin = new THREE.Vector3().setFromMatrixPosition(ray.matrixWorld);
+    const raycaster = new THREE.Raycaster(origin, this._forwardOf(ray));
     const intersects = raycaster.intersectObject(this.viewer.nodesMesh);
 
     if (intersects.length > 0) {
@@ -359,8 +303,9 @@ class VRController {
         // Right grip + pointing forward → fly
         const squeezing = this._controllers.get('right')?.squeezing;
         if (squeezing) {
+          const ray = this._xrControllers?.find((c) => c.ray.userData.handedness === 'right')?.ray;
           this._emit('fly', {
-            direction: this._getControllerForward(src),
+            direction: ray ? this._forwardOf(ray) : new THREE.Vector3(0, 0, -1),
             speed: FLY_SPEED,
           });
         }
@@ -375,86 +320,14 @@ class VRController {
   }
 
   /**
-   * Get the forward direction of a controller.
+   * Forward (-Z) direction of a controller's target ray in world space.
    *
-   * @param {XRInputSource} inputSource
+   * @param {THREE.Group} ray
    * @returns {THREE.Vector3}
    */
-  _getControllerForward(inputSource) {
-    const pose = this.xrFrame?.getPose(
-      inputSource.targetRaySpace,
-      this._viewerSpace
-    );
-
-    if (pose) {
-      const q = new THREE.Quaternion(
-        pose.transform.orientation.x,
-        pose.transform.orientation.y,
-        pose.transform.orientation.z,
-        pose.transform.orientation.w
-      );
-      const forward = new THREE.Vector3(0, 0, -1);
-      return forward.applyQuaternion(q);
-    }
-
-    return new THREE.Vector3(0, 0, -1);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  //  XR FRAME LOOP
-  // ═══════════════════════════════════════════════════════════════════════
-
-  /**
-   * Start the XR presentation frame loop.
-   * Replaces the standard requestAnimationFrame while VR is active.
-   */
-  _startXRFrameLoop() {
-    if (!this.session) return;
-
-    const onXRFrame = (time, frame) => {
-      this._xrFrameId = this.session.requestAnimationFrame(onXRFrame);
-      this.xrFrame = frame;
-
-      if (!this.xrLayer) return;
-
-      // ── Get viewer (head) pose ────────────────────────────────────
-      const pose = frame.getViewerPose(this._viewerSpace);
-      if (!pose) return;
-
-      // ── Poll controllers every N frames ───────────────────────────
-      this._frameCount++;
-      if (this._frameCount % CONTROLLER_POLL_INTERVAL === 0) {
-        this._pollControllerState();
-      }
-
-      // ── Render each eye ───────────────────────────────────────────
-      const gl = this.xrLayer.context;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.xrLayer.framebuffer);
-
-      for (const view of pose.views) {
-        const viewport = this.xrLayer.getViewport(view);
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
-
-        // Update the viewer camera from XR view
-        if (this.viewer) {
-          this.viewer.camera.projectionMatrix.fromArray(view.projectionMatrix);
-          // The view pose is the camera's world transform.
-          this.viewer.camera.matrix.fromArray(view.transform.matrix);
-          this.viewer.camera.matrix.decompose(
-            this.viewer.camera.position,
-            this.viewer.camera.quaternion,
-            this.viewer.camera.scale
-          );
-        }
-
-        // Render
-        if (this.viewer) {
-          this.viewer.renderer.render(this.viewer.scene, this.viewer.camera);
-        }
-      }
-    };
-
-    this._xrFrameId = this.session.requestAnimationFrame(onXRFrame);
+  _forwardOf(ray) {
+    const q = new THREE.Quaternion().setFromRotationMatrix(ray.matrixWorld);
+    return new THREE.Vector3(0, 0, -1).applyQuaternion(q);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -463,44 +336,34 @@ class VRController {
 
   /**
    * End the active VR session and return to desktop 3D mode.
+   * three.js and the session's `end` event do the cleanup and emit `vr-end`.
    */
   async endSession() {
     if (!this.session) return;
-
+    const session = this.session;
     try {
-      // Cancel XR frame loop
-      if (this._xrFrameId !== null) {
-        this.session.cancelAnimationFrame(this._xrFrameId);
-        this._xrFrameId = null;
-      }
-
-      await this.session.end();
+      await session.end();
     } catch (err) {
       console.warn('[VR] Error ending session:', err);
     }
-
-    this._cleanupSession();
-    this._emit('vr-end', {});
+    // A session that never fired `end` must still give the desktop back.
+    if (this.session === session) {
+      this._cleanupSession();
+      this._emit('vr-end', {});
+    }
   }
 
   /**
-   * Clean up session state without calling session.end().
-   * Called on 'end' event from the session or after endSession().
+   * Clean up session state and resume the viewer's desktop loop.
    */
   _cleanupSession() {
-    if (this._xrFrameId !== null) {
-      try { this.session?.cancelAnimationFrame(this._xrFrameId); } catch { /* ignore */ }
-      this._xrFrameId = null;
-    }
+    this.viewer?.stopXR();
     this.session = null;
-    this.refSpace = null;
-    this.xrLayer = null;
     this._controllers.clear();
     this._triggerStart = null;
     this._triggerController = null;
     this._bothGrips = false;
     this._frameCount = 0;
-    this.xrFrame = null;
   }
 
   /**
@@ -510,6 +373,8 @@ class VRController {
     if (this.session) {
       this.endSession().catch(() => {});
     }
+    for (const { ray, grip } of this._xrControllers || []) this.viewer?.scene?.remove(ray, grip);
+    this._xrControllers = null;
     this._listeners.clear();
     this.viewer = null;
   }

@@ -68,7 +68,7 @@ Each frame the viewer SHALL assign every node a tier by camera distance: full be
 - **THEN** it drops to mid detail
 
 ### Requirement: Animation loop
-`start()` SHALL run one `requestAnimationFrame` loop, ignoring repeat calls, that updates level of detail, eases tier changes, updates edge visibility every third frame, updates the controls, renders and tracks frame rate. The first frame SHALL log `[VR PERF] first_frame_ms: <ms>`. The loop SHALL work from the first frame after `render`.
+`start()` SHALL run one `requestAnimationFrame` loop, ignoring repeat calls and calls during a VR session, that updates level of detail, eases tier changes, updates edge visibility every third frame, updates the controls, renders and tracks frame rate. The first frame SHALL log `[VR PERF] first_frame_ms: <ms>`. The loop SHALL work from the first frame after `render`.
 
 #### Scenario: Started twice
 - **WHEN** `start()` is called while the loop runs
@@ -116,3 +116,10 @@ Edges between different clusters SHALL also be drawn as one faint line per clust
 #### Scenario: Folder cluster ids
 - **WHEN** nodes in clusters `src/auth` and `src/db` are joined by an edge
 - **THEN** one cluster line joins the two clusters
+
+### Requirement: XR loop handoff
+`startXR(onFrame)` SHALL stop the desktop loop and run the same frame work, without the controls, through `renderer.setAnimationLoop`, calling `onFrame` first. `stopXR()` SHALL clear the renderer's loop and restart the desktop loop.
+
+#### Scenario: Back from VR
+- **WHEN** `stopXR()` runs after `startXR()`
+- **THEN** `renderer.setAnimationLoop(null)` is called and a `requestAnimationFrame` frame is queued

@@ -651,7 +651,7 @@ holocron-vr/
 │   ├── InfoPanel.jsx        ← Node info panel (React) — deps, agent, VS Code, pin
 │   ├── SettingsPanel.jsx    ← Settings drawer (React) — LOD, filters, voice, theme
 │   ├── UIPanel.jsx          ← Plugin card component
-│   ├── voiceCommands.js     ← Speech recognition + 19-command grammar
+│   ├── voiceCommands.js     ← Speech recognition + 22-command grammar
 │   ├── layoutWorker.js      ← Web Worker (WASM engine + JS fallback)
 │   └── layout_engine.mjs    ← Compiled WASM module (Emscripten)
 ├── backend/                 ← Data pipeline, cache, agent context, integrations
@@ -675,9 +675,9 @@ holocron-vr/
 │   ├── bench-layout.js      ← Layout speed (5 graph sizes: 100–5,000 nodes)
 │   ├── bench-fps.js         ← FPS stability (60s Playwright session, P10 metric)
 │   ├── bench-memory.js      ← Memory leak detection (10 open/close cycles, < 20 MB)
-│   └── test-wasm.mjs        ← WASM export verification (28-test suite)
-├── tests/                   ← 237 automated tests (CI-gated)
-│   ├── unit/                ← 173 Jest tests (layout, voice parser, LOD, graph processor)
+│   └── test-wasm.mjs        ← WASM export verification (40-test suite)
+├── tests/                   ← 353 automated tests (CI-gated)
+│   ├── unit/                ← 289 Jest tests (layout, voice parser, LOD, graph processor)
 │   ├── integration/         ← 57 Playwright tests (API, lifecycle, WASM loading)
 │   └── privacy/             ← 7 Playwright tests (network isolation, audit log, transcripts)
 ├── .github/workflows/       ← CI/CD pipelines

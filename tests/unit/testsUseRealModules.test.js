@@ -14,7 +14,7 @@ const UNIT = join(root, 'tests', 'unit');
 const read = (dir) => readdirSync(dir).filter((f) => /\.(m?js|jsx)$/.test(f)).map((f) => [f, readFileSync(join(dir, f), 'utf8')]);
 
 /** Tests that check repository files rather than a module's behaviour. */
-const FILE_CHECKS = new Set(['ciWorkflow.test.js', 'testsUseRealModules.test.js', 'manifestPaths.test.js', 'buildReach.test.js']);
+const FILE_CHECKS = new Set(['ciWorkflow.test.js', 'testsUseRealModules.test.js', 'manifestPaths.test.js', 'buildReach.test.js', 'readmeCounts.test.js']);
 
 const sources = [...read(join(root, 'frontend')), ...read(join(root, 'backend'))];
 const sourceNames = new Set(sources.flatMap(([, code]) => [
