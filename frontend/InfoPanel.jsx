@@ -227,16 +227,18 @@ function InfoPanel({
   // ── Derived data ───────────────────────────────────────────────────
   const truncatedPath = useMemo(() => truncatePath(node?.path || node?.id || ''), [node]);
 
-  // If there's no node, render nothing
-  if (!node) return null;
-
   // ── Event handlers ─────────────────────────────────────────────────
+  // Every hook runs before the early return: React needs the same hooks in
+  // the same order on every render, with or without a node.
   const pulseRef = useRef(null);
   const handleAskAgent = useCallback(() => { if (!loading) onAskAgent?.(node); }, [node, onAskAgent, loading]);
   const handleFindRelated = useCallback(() => onFindRelated?.(node), [node, onFindRelated]);
   const handleOpenInVSCode = useCallback(() => onOpenInVSCode?.(node), [node, onOpenInVSCode]);
   const handlePin = useCallback(() => onPin?.(node), [node, onPin]);
   const handleClose = useCallback(() => onClose?.(node), [node, onClose]);
+
+  // If there's no node, render nothing
+  if (!node) return null;
 
   // ── Render ─────────────────────────────────────────────────────────
   return (

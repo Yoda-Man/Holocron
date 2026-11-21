@@ -63,18 +63,11 @@ export default defineConfig({
     }),
 
     // Copy static assets to dist/ with the same relative paths.
-    // plugin.json is transformed to reference compiled .js files.
     viteStaticCopy({
       targets: [
         {
           src: 'plugin.json',
           dest: '.',
-          // Transform .jsx references in uiExtensions → .js (the compiled output)
-          transform: (contents) => {
-            const raw = contents.toString();
-            const updated = raw.replace(/\.jsx"/g, '.js"');
-            return updated;
-          },
         },
         {
           // `src: 'assets/*'` with `dest: 'assets'` worked under
@@ -115,15 +108,24 @@ export default defineConfig({
       preserveEntrySignatures: 'strict',
       treeshake: false,
 
-      // Three entry points matching the YodaMan plugin contract:
+      // Entry points:
       //   main.js          — lifecycle hooks (module.exports)
       //   frontend/UIPanel  — React card component (JSX)
-      //   frontend/VRViewer — Three.js scene manager (ESM)
-      input: {
-        main: path.resolve(__dirname, 'main.js'),
-        'frontend/UIPanel': path.resolve(__dirname, 'frontend/UIPanel.jsx'),
-        'frontend/VRViewer': path.resolve(__dirname, 'frontend/VRViewer.js'),
-      },
+      //   frontend/VRViewer — Three.js scene manager, the modal component
+      //   the rest — the modules a host wires to a VRViewer (VR, voice,
+      //   info and settings panels, backend clients). Built so the .jsx
+      //   panels ship as loadable .js.
+      // frontend/layoutWorker.js and bindLayoutEngine.js ship as source:
+      // the worker loads ./layout_engine.mjs from beside itself.
+      // tests/unit/buildReach.test.js fails when a module is reached by neither.
+      input: Object.fromEntries([
+        'main.js',
+        'frontend/UIPanel.jsx', 'frontend/VRViewer.js', 'frontend/VRController.js',
+        'frontend/voiceCommands.js', 'frontend/InfoPanel.jsx', 'frontend/SettingsPanel.jsx',
+        'backend/graphProcessor.js', 'backend/layoutStore.js', 'backend/agentClient.js',
+        'backend/agentContextProvider.js', 'backend/viewStore.js', 'backend/vscodeClient.js',
+        'backend/auditLogger.js', 'backend/perfLogger.js',
+      ].map((file) => [file.replace(/\.jsx?$/, ''), path.resolve(__dirname, file)])),
 
       // Mark host-provided dependencies as external — YodaMan supplies
       // these at runtime and bundling duplicates would break the host.

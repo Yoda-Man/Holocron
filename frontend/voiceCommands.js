@@ -38,12 +38,14 @@ const COMMANDS = [
   // ── Navigation ─────────────────────────────────────────────────────
   { pattern: /show me (.+)/i,            action: 'showCluster',    paramIdx: 1 },
   { pattern: /where(?: is|'s| are|'re)? (.+)/i, action: 'flyToNode', paramIdx: 1 },
+  // Before "find (.+)", which would otherwise take "similar" as a node name.
+  { pattern: /find similar(?: files)?/i, action: 'findSimilar',    paramIdx: null },
   { pattern: /find (.+)/i,               action: 'flyToNode',      paramIdx: 1 },
   { pattern: /go home/i,                 action: 'flyToOrigin',    paramIdx: null },
   { pattern: /(?:go|fly|move) to origin/i, action: 'flyToOrigin',  paramIdx: null },
 
   // ── Dependencies ───────────────────────────────────────────────────
-  { pattern: /depend(?:encies|ents|s) of (.+)/i, action: 'showDeps', paramIdx: 1 },
+  { pattern: /(?:deps?|depend(?:encies|ents|s)) of (.+)/i, action: 'showDeps', paramIdx: 1 },
   { pattern: /what depends on (.+)/i,    action: 'showDependents', paramIdx: 1 },
   { pattern: /what does (.+) depend on/i, action: 'showDeps',      paramIdx: 1 },
 
@@ -56,7 +58,6 @@ const COMMANDS = [
   // ── Agent / Queries ────────────────────────────────────────────────
   { pattern: /ask agent about this/i,    action: 'askAgent',       paramIdx: null },
   { pattern: /ask agent/i,               action: 'askAgent',       paramIdx: null },
-  { pattern: /find similar(?: files)?/i, action: 'findSimilar',    paramIdx: null },
 
   // ── Desktop / Save ─────────────────────────────────────────────────
   { pattern: /open in (?:vs code|editor)/i, action: 'openInEditor', paramIdx: null },
@@ -64,7 +65,8 @@ const COMMANDS = [
 
   // ── Help ───────────────────────────────────────────────────────────
   { pattern: /help/i,                    action: 'help',           paramIdx: null },
-  { pattern: /what can I say/i,          action: 'help',           paramIdx: null },
+  // "can" is a filler word, so it is gone by the time patterns run.
+  { pattern: /what (?:can )?i say/i,     action: 'help',           paramIdx: null },
 ];
 
 // ─── Keyboard Shortcuts (fallback when voice is off) ────────────────────

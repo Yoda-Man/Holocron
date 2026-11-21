@@ -43,7 +43,7 @@
 - **Desktop mode** — Mouse/keyboard orbit, pan, zoom, and click interaction
 - **VR mode** — Meta Quest 2/3/Pro via WebXR with full 6-DoF controller tracking
 - **Single InstancedMesh** — All 3,000+ nodes rendered in a single draw call
-- **SIMD-accelerated WASM** — Layout computation 10× faster than pure JS (52 `wasm_simd128.h` intrinsics)
+- **SIMD-accelerated WASM** — Layout computation 10× faster than pure JS (43 `wasm_simd128.h` intrinsics)
 - **LOD system** — 4-tier Level of Detail (FULL→MID→DOT→CULLED) with hysteresis anti-flicker
 - **10-frame transition animation** — Smooth interpolated scale changes between LOD tiers
 - **Auto-performance mode** — Automatically reduces LOD thresholds when FPS < 45 for 3+ seconds
@@ -54,7 +54,7 @@
 ### 🗣 Voice Commands
 - Natural language: *"Where is AuthService"*, *"Show me payment"*, *"Hide tests"*
 - Strips filler words: *"um show me auth please"* → `showCluster(auth)`
-- 19-command grammar: navigation, dependencies, filters, agent, save/restore, help
+- 22-command grammar: navigation, dependencies, filters, agent, save/restore, help
 - Keyboard shortcuts as fallback: `Ctrl+Shift+H` (hide tests), `Ctrl+Shift+S` (show all), `Ctrl+Shift+R` (return)
 
 ### 🤖 AI Agent Integration
@@ -194,7 +194,7 @@ holocron-vr/
 │   ├── InfoPanel.jsx         ← Node info panel (React) — deps, agent, VS Code
 │   ├── SettingsPanel.jsx     ← Settings drawer (React) — LOD, filters, voice, theme
 │   ├── UIPanel.jsx           ← Plugin card component
-│   ├── voiceCommands.js      ← Speech recognition + 19-command grammar
+│   ├── voiceCommands.js      ← Speech recognition + 22-command grammar
 │   ├── layoutWorker.js       ← Web Worker (WASM layout engine bridge + JS fallback)
 │   └── layout_engine.mjs     ← Compiled WASM module (Emscripten)
 ├── backend/                  ← Data pipeline, cache, integrations, context
@@ -207,7 +207,7 @@ holocron-vr/
 │   ├── vscodeClient.js       ← "Open in VS Code" API + keyboard shortcut
 │   └── perfLogger.js         ← Dev-only performance profiling (__DEV__ stripped in prod)
 ├── wasm-src/                 ← C++ WASM layout engine (SIMD via wasm_simd128.h)
-│   ├── layout_engine.cpp     ← SIMD-accelerated force-directed layout (52 intrinsic calls)
+│   ├── layout_engine.cpp     ← SIMD-accelerated force-directed layout (43 intrinsic calls)
 │   ├── force_directed.h      ← Micro-layout (O(n²) repulsion + attraction)
 │   ├── macro_layout.h        ← Macro-layout (golden-angle sphere placement)
 │   └── CMakeLists.txt        ← Emscripten build (Release/Debug)
@@ -218,15 +218,15 @@ holocron-vr/
 │   ├── bench-layout.js       ← Layout speed (100/500/1000/3000/5000 nodes)
 │   ├── bench-fps.js          ← FPS stability (60s Playwright session, P10 metric)
 │   ├── bench-memory.js       ← Memory leak detection (10-cycle open/close, <20 MB)
-│   └── test-wasm.mjs         ← WASM export verification (28-test suite)
-├── tests/                    ← 237 automated tests (CI-gated)
-│   ├── unit/                 ← 173 Jest tests (layout, voice, LOD, graph processor)
+│   └── test-wasm.mjs         ← WASM export verification (40-test suite)
+├── tests/                    ← 353 automated tests (CI-gated)
+│   ├── unit/                 ← 289 Jest tests (layout, voice, LOD, graph processor)
 │   ├── integration/          ← 57 Playwright tests (API, lifecycle, WASM)
 │   └── privacy/              ← 7 Playwright tests (network isolation, audit, transcripts)
 ├── .github/workflows/        ← CI/CD (push + tag)
 │   ├── ci.yml                ← Validate on every push
 │   └── release.yml           ← Package + release on tag
-├── USER_MANUAL.md            ← 601-line user manual
+├── USER_MANUAL.md            ← 702-line user manual
 ├── store.json                ← Plugin Registry metadata
 └── README.md                 ← You are here
 ```
@@ -251,7 +251,7 @@ npm run build
 npm run dev
 
 # Run tests
-npm run test:unit              # 173 unit tests (Jest)
+npm run test:unit              # 289 unit tests (Jest)
 npm run test:int               # 57 integration tests (Playwright, headless)
 npm run test:int:headed        # Integration tests (visible browser)
 
@@ -276,7 +276,7 @@ npm run test:int:debug         # Integration tests with PWDEBUG inspector
 ```
 
 The test suite includes:
-- **173 unit tests** — Layout algorithm, voice parser, LOD tiers, graph processing
+- **289 unit tests** — Layout algorithm, voice parser, LOD tiers, graph processing
 - **57 integration tests** — Graphify API endpoints, plugin lifecycle, WASM loading
 - **7 privacy validation tests** — Network isolation, audit log content, voice transcript protection
 

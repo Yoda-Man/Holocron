@@ -37,6 +37,7 @@
  */
 
 import { bindLayoutEngine } from './bindLayoutEngine.js';
+import { clusterIndices } from './clusterIndex.js';
 
 // ─── Module-level State ─────────────────────────────────────────────────
 
@@ -51,6 +52,8 @@ let currentNodes = [];
 let currentEdges = [];
 let currentNodeCount = 0;
 let currentEdgeCount = 0;
+/** Dense integer cluster id per node; see clusterIndex.js. */
+let currentClusterIds = new Int32Array(0);
 
 /** Abort flag — set by "abort" message. */
 let abortRequested = false;
@@ -119,7 +122,7 @@ async function loadWasmModule() {
  *   5. Run compute_layout()
  *   6. Read output positions via get_positions_ptr() (zero-copy)
  *   7. Transfer positions back to main thread (Transferable)
- *   8. Release WASM memory
+ *   8. Keep WASM memory for refinement (freed by the next init_graph or abort)
  *
  * @param {object} config — Algorithm parameters
  * @returns {object} { positions: Float32Array, nodeCount: number, layoutTimeMs: number }
@@ -170,7 +173,7 @@ function runWasmLayout(config) {
     nodeHeap[base + 1] = node.seedY ?? 0;
     nodeHeap[base + 2] = node.seedZ ?? 0;
     nodeHeap[base + 3] = 1.0 + 0.01 * (node.size ?? 0);        // mass
-    nodeHeap[base + 4] = node.clusterId ?? -1;                   // cluster_id
+    nodeHeap[base + 4] = currentClusterIds[i];                   // cluster_id
     nodeHeap[base + 5] = node.importance ?? 0;                   // importance
     nodeHeap[base + 6] = 0;                                      // reserved
   }
@@ -211,17 +214,14 @@ function runWasmLayout(config) {
   );
 
   // ── Step 7: Copy + transfer (§5.1 Step 9) ────────────────────────
-  // We must copy the data out of WASM heap because free_memory() will
-  // release the underlying memory. Use slice() which creates a new
-  // ArrayBuffer and copies the data.
-  const byteLength = count * 3 * Float32Array.BYTES_PER_ELEMENT;
+  // Copy out of the WASM heap: the result buffer is transferred to the main
+  // thread, and refinement keeps writing into the heap.
   const positions = new Float32Array(positionsView.slice());
 
   const t1 = performance.now();
 
-  // ── Step 8: Release WASM memory (§5.1 Step 10) ───────────────────
-  Module.free_memory();
-
+  // Engine memory stays allocated so `refine` can keep moving these nodes.
+  // init_graph frees it before the next layout, and abort frees it.
   return { positions, nodeCount: count, layoutTimeMs: t1 - t0 };
 }
 
@@ -285,10 +285,9 @@ function runJsLayout(config, onProgress) {
   }
 
   // ── Pre-extract cluster and mass data ────────────────────────────
-  const clusterIds = new Int32Array(N);
+  const clusterIds = currentClusterIds;
   const masses = new Float32Array(N);
   for (let i = 0; i < N; i++) {
-    clusterIds[i] = currentNodes[i].clusterId ?? -1;
     masses[i] = 1.0 + 0.01 * (currentNodes[i].size ?? 0);
   }
 
@@ -486,8 +485,15 @@ function runJsLayout(config, onProgress) {
 function handleLayoutMessage(data) {
   abortRequested = false;
   currentNodes = data.nodes ?? [];
-  currentEdges = data.edges ?? [];
   currentNodeCount = currentNodes.length;
+  currentClusterIds = clusterIndices(currentNodes);
+  // Edges may name nodes by id; both engines need integer indexes (-1 = ignored).
+  const indexOf = new Map(currentNodes.map((n, i) => [n.id, i]));
+  currentEdges = (data.edges ?? []).map((e) => ({
+    ...e,
+    sourceIdx: e.sourceIdx ?? indexOf.get(e.source) ?? -1,
+    targetIdx: e.targetIdx ?? indexOf.get(e.target) ?? -1,
+  }));
   currentEdgeCount = currentEdges.length;
   const config = data.config ?? {};
 
