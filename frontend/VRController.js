@@ -22,6 +22,8 @@
  * @see 08-Testing-Spec.md §3.2 — Controller mapping validation
  */
 
+import * as THREE from 'three';
+
 // ─── Constants ──────────────────────────────────────────────────────────
 
 /** Duration for "long press" trigger detection (ms). */
@@ -290,16 +292,9 @@ class VRController {
     const pose = this.xrFrame?.getPose(raySpace, this._viewerSpace);
     if (!pose) return;
 
-    // Ray origin & direction
-    const origin = pose.transform.position;
-    const dir = new THREE.Vector3(
-      -pose.transform.orientation.x,
-      -pose.transform.orientation.y,
-      -pose.transform.orientation.z
-    );
-
-    // Raycast using Three.js
-    const raycaster = new THREE.Raycaster(origin, dir.normalize());
+    // Ray from the controller position along its forward (-Z) direction
+    const origin = new THREE.Vector3().copy(pose.transform.position);
+    const raycaster = new THREE.Raycaster(origin, this._getControllerForward(inputSource));
     const intersects = raycaster.intersectObject(this.viewer.nodesMesh);
 
     if (intersects.length > 0) {
@@ -443,8 +438,8 @@ class VRController {
         // Update the viewer camera from XR view
         if (this.viewer) {
           this.viewer.camera.projectionMatrix.fromArray(view.projectionMatrix);
-          const viewMatrix = new THREE.Matrix4().fromArray(view.transform.inverse.matrix);
-          this.viewer.camera.matrix.fromArray(viewMatrix);
+          // The view pose is the camera's world transform.
+          this.viewer.camera.matrix.fromArray(view.transform.matrix);
           this.viewer.camera.matrix.decompose(
             this.viewer.camera.position,
             this.viewer.camera.quaternion,

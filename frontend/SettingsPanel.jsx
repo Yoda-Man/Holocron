@@ -265,6 +265,13 @@ function SettingsPanel({
     [onFilterChange]
   );
 
+  // The tests, thirdParty and generated filters HIDE when on, so a "Show"
+  // checkbox is checked while its filter is off, and checking it turns it off.
+  const toggleShow = useCallback(
+    (key) => (e) => onFilterChange?.(key, !e.target.checked),
+    [onFilterChange]
+  );
+
   const toggleLang = useCallback(
     (key) => () => onFilterChange?.(key, !filters[key]),
     [filters, onFilterChange]
@@ -386,7 +393,7 @@ function SettingsPanel({
 
                 <label style={style.filterRow}>
                   <input type="checkbox" style={style.checkbox}
-                    checked={!!filters.tests} onChange={toggleFilter('tests')} />
+                    checked={!filters.tests} onChange={toggleShow('tests')} />
                   <span style={style.label}>Show test files</span>
                 </label>
                 <div style={{ ...style.labelDesc, marginLeft: '24px', marginBottom: '4px' }}>
@@ -395,7 +402,7 @@ function SettingsPanel({
 
                 <label style={style.filterRow}>
                   <input type="checkbox" style={style.checkbox}
-                    checked={!!filters.thirdParty} onChange={toggleFilter('thirdParty')} />
+                    checked={!filters.thirdParty} onChange={toggleShow('thirdParty')} />
                   <span style={style.label}>Show third-party code</span>
                 </label>
                 <div style={{ ...style.labelDesc, marginLeft: '24px', marginBottom: '2px' }}>
@@ -404,7 +411,7 @@ function SettingsPanel({
 
                 <label style={style.filterRow}>
                   <input type="checkbox" style={style.checkbox}
-                    checked={!!filters.generated} onChange={toggleFilter('generated')} />
+                    checked={!filters.generated} onChange={toggleShow('generated')} />
                   <span style={style.label}>Show generated files</span>
                 </label>
 

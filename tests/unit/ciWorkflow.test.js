@@ -28,7 +28,7 @@
  * Because CI could not report its own breakage. The check has to live where it
  * runs before the push — `npm run test:unit` on a developer's machine.
  */
-import { readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, rmSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -175,4 +175,51 @@ describe('the C++ source is the one that gets compiled', () => {
             if (existsSync(out)) rmSync(out, { force: true });
         }
     }, 120000);
+});
+
+describe('the privacy scan can fail', () => {
+    // It ran as `grep ... && echo FAIL || echo PASS`, which exits 0 either way.
+    const ROOT = join(here, '..', '..');
+    const SCAN = join(ROOT, 'scripts', 'privacy-scan.mjs');
+    const scan = (dir) => {
+        try {
+            execFileSync(process.execPath, [SCAN, dir], { stdio: 'pipe' });
+            return 0;
+        } catch (err) {
+            return err.status;
+        }
+    };
+
+    it('exits 1 on a planted external fetch and 0 on a local one', () => {
+        const dir = mkdtempSync(join(tmpdir(), 'holocron-privacy-'));
+        try {
+            writeFileSync(join(dir, 'ok.js'), "fetch('/api/graphify/status');\n");
+            expect(scan(dir)).toBe(0);
+            writeFileSync(join(dir, 'leak.js'), "fetch('https://example.com/collect');\n");
+            expect(scan(dir)).toBe(1);
+        } finally {
+            rmSync(dir, { recursive: true, force: true });
+        }
+    });
+
+    it.each(['ci.yml', 'release.yml'])('%s runs the scan as its own failing step', (file) => {
+        const doc = yaml.load(readFileSync(join(WORKFLOW_DIR, file), 'utf8'));
+        const steps = Object.values(doc.jobs).flatMap((job) => job.steps || []);
+        const step = steps.find((s) => (s.run || '').includes('scripts/privacy-scan.mjs'));
+        expect(step).toBeDefined();
+        expect(step.run.trim()).toBe('node scripts/privacy-scan.mjs');
+        expect(step['continue-on-error']).toBeFalsy();
+    });
+});
+
+describe('the release publishes the zip the build makes', () => {
+    it('release.yml attaches holocron-vr-*.zip, the name package-release.sh writes', () => {
+        const script = readFileSync(join(here, '..', '..', 'scripts', 'package-release.sh'), 'utf8');
+        expect(script).toMatch(/holocron-vr-\$\{npm_package_version\}\.zip/);
+        const doc = yaml.load(readFileSync(join(WORKFLOW_DIR, 'release.yml'), 'utf8'));
+        const release = Object.values(doc.jobs).flatMap((job) => job.steps || [])
+            .find((s) => (s.uses || '').startsWith('softprops/action-gh-release'));
+        expect(release.with.files).toBe('holocron-vr-*.zip');
+        expect(release.with.fail_on_unmatched_files).toBe(true);
+    });
 });

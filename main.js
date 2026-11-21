@@ -62,17 +62,12 @@ module.exports = {
   /**
    * Called when the user enables the plugin (or YodaMan starts with
    * the plugin already in the enabled list).
-   * Use for: starting background services, registering keyboard shortcuts.
+   * Use for: registering keyboard shortcuts.
    *
    * @param {object} api — YodaMan plugin API handle
    * @returns {Promise<void>}
    */
   async onEnable(api) {
-    // Pre-warm the graph cache in the background (non-blocking).
-    // The Web Worker fetches /api/graphify/map and computes the 3D layout
-    // so that the VR scene is ready when the user opens the modal.
-    api.worker.run('./backend/graphCache.js', { prefetch: true });
-
     // Register a desktop keyboard shortcut (Ctrl+Shift+V) to launch the
     // VR explorer without navigating through the Plugins tab.
     api.ui.registerShortcut({
@@ -82,7 +77,7 @@ module.exports = {
         api.ui.openModal({
           id: 'constellation-vr-modal',
           title: 'Holocron VR',
-          component: './frontend/UIPanel.jsx#VRExplorerModal',
+          component: './frontend/VRViewer.js',
           fullScreen: true,
           closable: true,
           onClose: () => api.log.info('[VR] Modal closed'),
@@ -103,7 +98,7 @@ module.exports = {
    * @returns {Promise<void>}
    */
   async onDisable(api) {
-    // Terminate any running Web Workers (layoutWorker, graphCache)
+    // Terminate any Web Workers the host started for this plugin
     api.worker.terminateAll();
 
     // Unregister the keyboard shortcut registered in onEnable

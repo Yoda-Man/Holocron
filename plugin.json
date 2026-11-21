@@ -2,7 +2,7 @@
   "name": "holocron-vr",
   "displayName": "Holocron VR",
   "description": "Explore your codebase as an immersive 3D VR constellation powered by Graphify knowledge graphs.",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "author": "Yoda-Man",
   "minYodaManVersion": "0.3.8",
   "mandatory": false,
@@ -19,21 +19,6 @@
     "git:read",
     "upload:temp",
     "filesystem:read-selected"
-  ],
-  "uiExtensions": [
-    {
-      "target": "main-tab-bar",
-      "position": 1,
-      "label": "Agent",
-      "icon": "assets/chat-icon.svg",
-      "component": "frontend/AgenticChat.jsx"
-    },
-    {
-      "target": "plugins-tab",
-      "label": "Holocron VR",
-      "icon": "assets/icon.svg",
-      "component": "frontend/UIPanel.jsx"
-    }
   ],
   "configSchema": {
     "lodNear": {

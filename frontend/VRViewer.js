@@ -18,6 +18,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { isIgnoredPath } from '../backend/ignoredPaths.js';
+import { clusterIndices } from './clusterIndex.js';
 
 // Keep the colours this scene was tuned on (three r128): no colour management
 // and linear output, both of which r152 changed. Set before the palette below
@@ -134,15 +135,21 @@ const _raycaster = new THREE.Raycaster();
  *   - type === 'folder' → dim grey
  *   - Otherwise → lookup by node.language
  */
+const LANGUAGE_ALIASES = {
+  javascript: 'js', typescript: 'ts', python: 'py', markdown: 'md',
+  rust: 'rs', golang: 'go', yml: 'yaml', shell: 'sh',
+};
+
+/** Short language name, so a `markdown` filter matches an `md` node. */
+function canonicalLanguage(language) {
+  const l = (language || '').toLowerCase();
+  return LANGUAGE_ALIASES[l] || l;
+}
+
 function getNodeColor(node) {
   const p = (node.path || node.id || '').toLowerCase();
-  const languageAliases = {
-    javascript: 'js', typescript: 'ts', python: 'py', markdown: 'md',
-    rust: 'rs', golang: 'go', yml: 'yaml', shell: 'sh',
-  };
-  const rawLanguage = (node.language || '').toLowerCase();
   const extension = p.includes('.') ? p.split('.').pop() : '';
-  const lang = languageAliases[rawLanguage] || rawLanguage || extension;
+  const lang = canonicalLanguage(node.language) || extension;
 
   if (node.type === 'folder') return TYPE_COLORS._folder;
   if (/\/test(s)?\//.test(p) || /\/spec\//.test(p) || /_test\./.test(p) || /\.spec\./.test(p)) {
@@ -152,6 +159,20 @@ function getNodeColor(node) {
     return TYPE_COLORS._asset;
   }
   return TYPE_COLORS[lang] || COLOR_DEFAULT;
+}
+
+/**
+ * LOD tier for a node at `dist` from the camera. A node keeps its previous
+ * tier inside a HYSTERESIS band past each threshold, so it does not flicker.
+ */
+function lodTier(dist, prev, { lodNear, lodMid, lodFar }) {
+  if      (dist < lodNear)                                   return LOD.FULL;
+  else if (dist < lodNear + HYSTERESIS && prev === LOD.FULL) return LOD.FULL;
+  else if (dist < lodMid)                                    return LOD.MID;
+  else if (dist < lodMid + HYSTERESIS && prev === LOD.MID)   return LOD.MID;
+  else if (dist < lodFar)                                    return LOD.DOT;
+  else if (dist < lodFar + HYSTERESIS && prev === LOD.DOT)   return LOD.DOT;
+  return LOD.CULLED;
 }
 
 // ═════════════════════════════════════════════════════════════════════════
@@ -212,6 +233,11 @@ class VRViewer {
     this._edgeUpdateCounter = 0;
     this.lowPerfMode        = false;
     this._firstFrameLogged  = false;
+    // The first frame reads these; left undefined, start() threw before rendering.
+    this._lodTransitions    = [];
+    this._lodSwapThrottle   = 0;
+    this._lowFpsStart       = 0;
+    this._autoReduced       = false;
 
     // LOD geometry cache
     this._sphereGeomFull = null;
@@ -340,6 +366,7 @@ class VRViewer {
     const maxNodes = Math.min(nodes.length, this.config.maxNodes);
     this.nodeIdMap = new Map();
     this.nodeData  = new Array(maxNodes);
+    this._glowIndexOf = new Int32Array(maxNodes).fill(-1);
 
     // Build geometry cache
     this._sphereGeomFull = new THREE.SphereGeometry(SPHERE_RADIUS, SPHERE_SEGMENTS.radial, SPHERE_SEGMENTS.height);
@@ -428,6 +455,7 @@ class VRViewer {
         _mat4.setPosition(px, py, pz);
         this.glowMesh.setMatrixAt(gi, _mat4);
         this.glowMesh.setColorAt(gi, c);
+        this._glowIndexOf[i] = gi;
         gi++;
       }
     }
@@ -450,9 +478,8 @@ class VRViewer {
 
     // ── Cluster centroids (for edge aggregation) ──────────────────────
     this._clusterCentroids = [];
-    this._clusterIds = new Int32Array(maxNodes);
+    this._clusterIds = clusterIndices(nodes, maxNodes);
     for (let i = 0; i < maxNodes; i++) {
-      this._clusterIds[i] = nodes[i].clusterId ?? -1;
       const cid = this._clusterIds[i];
       if (cid >= 0 && !this._clusterCentroids[cid]) {
         // Extract centroid from node's initial seed position
@@ -539,15 +566,9 @@ class VRViewer {
     }
   }
 
-  /** Find glow instance index for a node instance (linear scan — called rarely). */
+  /** Glow instance index for a node instance, or -1 when it has no glow. */
   _glowIndex(nodeIdx) {
-    if (!this.nodeData) return -1;
-    if ((this.nodeData[nodeIdx]?.importance ?? 0) <= IMPORTANCE_GLOW_THRESHOLD) return -1;
-    let gi = 0;
-    for (let i = 0; i < nodeIdx; i++) {
-      if ((this.nodeData[i]?.importance ?? 0) > IMPORTANCE_GLOW_THRESHOLD) gi++;
-    }
-    return gi;
+    return this._glowIndexOf?.[nodeIdx] ?? -1;
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -737,8 +758,6 @@ class VRViewer {
 
   _updateLOD() {
     const camPos = this.camera.position;
-    const { lodNear, lodMid, lodFar } = this.config;
-
     // Throttle: geometry swaps every 3 frames max (§6.3)
     this._lodSwapThrottle++;
     const allowSwap = this._lodSwapThrottle % 3 === 0;
@@ -749,14 +768,7 @@ class VRViewer {
       const dist = camPos.distanceTo(_pos);
       const prev = this.lodData[i].tier;
 
-      let tier;
-      if      (dist < lodNear)                                          tier = LOD.FULL;
-      else if (dist < lodNear + HYSTERESIS && prev === LOD.FULL)        tier = LOD.FULL;
-      else if (dist < lodMid)                                           tier = LOD.MID;
-      else if (dist < lodMid + HYSTERESIS && prev === LOD.MID)          tier = LOD.MID;
-      else if (dist < lodFar)                                           tier = LOD.DOT;
-      else if (dist < lodFar + HYSTERESIS && prev === LOD.DOT)          tier = LOD.DOT;
-      else                                                              tier = LOD.CULLED;
+      const tier = lodTier(dist, prev, this.config);
 
       if (tier !== prev) {
         this.lodData[i].tier = tier;
@@ -905,7 +917,7 @@ class VRViewer {
   updateEdgeVisibility(camera) {
     const p = camera || this.camera;
     if (!p) return;
-    this._updateEdgeVisibility(p);
+    this._updateEdgeVisibility(p.position);
   }
 
   /**
@@ -991,6 +1003,9 @@ class VRViewer {
     json:        false,
     yaml:        false,
     markdown:    false,
+    typescript:  false,
+    javascript:  false,
+    python:      false,
   };
 
   /** Per-instance visibility flags (true = visible). */
@@ -1125,10 +1140,10 @@ class VRViewer {
     this.nodesMesh.setColorAt(instanceIdx, _color);
     this.nodesMesh.instanceColor.needsUpdate = true;
 
-    // Also highlight glow mesh if present
-    if (this.glowMesh) {
-      _color.set(0x22d3ee);
-      this.glowMesh.setColorAt(instanceIdx, _color);
+    // Also highlight this node's own glow, if it has one
+    const gi = this._glowIndex(instanceIdx);
+    if (this.glowMesh && gi >= 0) {
+      this.glowMesh.setColorAt(gi, _color);
       this.glowMesh.instanceColor.needsUpdate = true;
     }
   }
@@ -1145,6 +1160,11 @@ class VRViewer {
     if (data?.color) {
       this.nodesMesh.setColorAt(idx, data.color);
       this.nodesMesh.instanceColor.needsUpdate = true;
+      const gi = this._glowIndex(idx);
+      if (this.glowMesh && gi >= 0) {
+        this.glowMesh.setColorAt(gi, data.color);
+        this.glowMesh.instanceColor.needsUpdate = true;
+      }
     }
   }
 
@@ -1258,9 +1278,11 @@ class VRViewer {
 
     // Language filter: show nodes of this language ONLY
     // (AND with other filter types)
-    const langFilters = ['dart', 'json', 'yaml', 'markdown', 'javascript', 'python', 'go', 'rust', 'typescript'];
+    const langFilters = ['dart', 'json', 'yaml', 'markdown', 'javascript', 'python', 'typescript'];
     if (langFilters.includes(type)) {
-      return (data.language || '').toLowerCase() === type;
+      const lang = canonicalLanguage(data.language);
+      const want = canonicalLanguage(type);
+      return lang === want || (want === 'ts' && lang === 'tsx');
     }
 
     switch (type) {
@@ -1300,43 +1322,26 @@ class VRViewer {
 
     for (let i = 0; i < this._instanceVisible.length; i++) {
       const visible = this._instanceVisible[i];
-
-      // Get the current scale from the instance matrix
-      this.nodesMesh.getMatrixAt(i, _mat4);
-      const pos = _pos.setFromMatrixPosition(_mat4);
-
-      // Check current scale magnitude — if it matches hidden state, skip
-      const curScale = _scaleVec.setFromMatrixScale(_mat4);
-      const isHidden = curScale.x < 0.001;
-
-      if (visible && isHidden) {
-        // Restore — use the nodeData's stored scale
-        const s = this.nodeData?.[i]?.scale ?? 0.3;
-        _mat4.makeScale(s, s, s);
-        _mat4.setPosition(pos);
-        this.nodesMesh.setMatrixAt(i, _mat4);
-      } else if (!visible && !isHidden) {
-        // Hide — set scale to 0
-        _mat4.makeScale(0, 0, 0);
-        _mat4.setPosition(pos);
-        this.nodesMesh.setMatrixAt(i, _mat4);
-      }
+      const s = this.nodeData?.[i]?.scale ?? 0.3;
+      this._setInstanceShown(this.nodesMesh, i, visible, s);
+      const gi = this._glowIndex(i);
+      if (this.glowMesh && gi >= 0) this._setInstanceShown(this.glowMesh, gi, visible, s * GLOW_SCALE_MULT);
     }
 
     this.nodesMesh.instanceMatrix.needsUpdate = true;
+    if (this.glowMesh) this.glowMesh.instanceMatrix.needsUpdate = true;
+  }
 
-    // Also update glow mesh visibility
-    if (this.glowMesh) {
-      for (let i = 0; i < this._instanceVisible.length; i++) {
-        if (!this._instanceVisible[i]) {
-          _mat4.identity();
-          _mat4.makeScale(0, 0, 0);
-          _mat4.setPosition(0, 0, 0);
-          this.glowMesh.setMatrixAt(i, _mat4);
-        }
-      }
-      this.glowMesh.instanceMatrix.needsUpdate = true;
-    }
+  /** Scale one instance to zero to hide it, or back to `scale` when shown again. */
+  _setInstanceShown(mesh, idx, visible, scale) {
+    mesh.getMatrixAt(idx, _mat4);
+    const pos = _pos.setFromMatrixPosition(_mat4);
+    const isHidden = _scaleVec.setFromMatrixScale(_mat4).x < 0.001;
+    if (visible !== isHidden) return;
+    const s = visible ? scale : 0;
+    _mat4.makeScale(s, s, s);
+    _mat4.setPosition(pos);
+    mesh.setMatrixAt(idx, _mat4);
   }
 
   /**
@@ -2097,3 +2102,4 @@ class VRViewer {
 }
 
 export default VRViewer;
+export { lodTier, LOD };

@@ -9,36 +9,10 @@
  * @see 02-TSD.md §8              — LOD algorithm
  */
 
-// ─── LOD Tier Enum ──────────────────────────────────────────────────────
+// Tests the shipped tier function, not a copy of it.
+import { lodTier, LOD } from '../../frontend/VRViewer.js';
 
-const LOD = Object.freeze({ FULL: 0, MID: 1, DOT: 2, CULLED: 3 });
-
-/** Hysteresis band half-width (units). */
-const HYSTERESIS = 0.5;
-
-// ═════════════════════════════════════════════════════════════════════════
-//  LOD CALCULATOR
-// ═════════════════════════════════════════════════════════════════════════
-
-/**
- * Determine the LOD tier for a node at a given distance from the camera.
- *
- * @param {number} dist   — Camera-to-node distance
- * @param {number} prev   — Previous LOD tier (for hysteresis)
- * @param {object} config — { lodNear, lodMid, lodFar }
- * @returns {number} LOD tier
- */
-function getLODTier(dist, prev, config) {
-  const { lodNear, lodMid, lodFar } = config;
-
-  if      (dist < lodNear)                           return LOD.FULL;
-  else if (dist < lodNear + HYSTERESIS && prev === LOD.FULL) return LOD.FULL;
-  else if (dist < lodMid)                            return LOD.MID;
-  else if (dist < lodMid + HYSTERESIS && prev === LOD.MID) return LOD.MID;
-  else if (dist < lodFar)                            return LOD.DOT;
-  else if (dist < lodFar + HYSTERESIS && prev === LOD.DOT) return LOD.DOT;
-  else                                                return LOD.CULLED;
-}
+const getLODTier = lodTier;
 
 // ═════════════════════════════════════════════════════════════════════════
 //  TESTS
